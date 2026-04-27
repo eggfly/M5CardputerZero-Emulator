@@ -1,0 +1,3 @@
+[submodule "vendor/M5CardputerZero-UserDemo"]
+	path = vendor/M5CardputerZero-UserDemo
+	url = git@github.com:eggfly/M5CardputerZero-UserDemo.git

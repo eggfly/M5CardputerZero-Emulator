@@ -12,34 +12,33 @@ set(APPLAUNCH  ${VENDOR_DIR}/projects/APPLaunch/main)
 set(USERDEMO   ${VENDOR_DIR}/projects/UserDemo/main)
 
 # ---------------------------------------------------------------------------
-# SDL2
+# SDL2 + Freetype (skip for Emscripten — uses its own ports)
 # ---------------------------------------------------------------------------
-if(APPLE)
-    if(EXISTS "/opt/homebrew/opt/sdl2")
-        list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/sdl2")
-    elseif(EXISTS "/usr/local/opt/sdl2")
-        list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/sdl2")
+if(NOT EMSCRIPTEN)
+    if(APPLE)
+        if(EXISTS "/opt/homebrew/opt/sdl2")
+            list(APPEND CMAKE_PREFIX_PATH "/opt/homebrew/opt/sdl2")
+        elseif(EXISTS "/usr/local/opt/sdl2")
+            list(APPEND CMAKE_PREFIX_PATH "/usr/local/opt/sdl2")
+        endif()
     endif()
-endif()
 
-find_package(SDL2 QUIET)
-if(NOT SDL2_FOUND)
-    find_package(PkgConfig REQUIRED)
-    pkg_check_modules(SDL2 REQUIRED sdl2)
-endif()
+    find_package(SDL2 QUIET)
+    if(NOT SDL2_FOUND)
+        find_package(PkgConfig REQUIRED)
+        pkg_check_modules(SDL2 REQUIRED sdl2)
+    endif()
 
-# ---------------------------------------------------------------------------
-# Freetype
-# ---------------------------------------------------------------------------
-find_package(PkgConfig QUIET)
-if(PkgConfig_FOUND)
-    pkg_check_modules(FREETYPE freetype2)
-endif()
-if(NOT FREETYPE_FOUND)
-    find_package(Freetype QUIET)
-    if(Freetype_FOUND)
-        set(FREETYPE_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIRS})
-        set(FREETYPE_LIBRARIES Freetype::Freetype)
+    find_package(PkgConfig QUIET)
+    if(PkgConfig_FOUND)
+        pkg_check_modules(FREETYPE freetype2)
+    endif()
+    if(NOT FREETYPE_FOUND)
+        find_package(Freetype QUIET)
+        if(Freetype_FOUND)
+            set(FREETYPE_INCLUDE_DIRS ${FREETYPE_INCLUDE_DIRS})
+            set(FREETYPE_LIBRARIES Freetype::Freetype)
+        endif()
     endif()
 endif()
 
@@ -51,25 +50,30 @@ set(LV_CONF_BUILD_DISABLE_EXAMPLES ON CACHE BOOL "" FORCE)
 set(LV_CONF_BUILD_DISABLE_THORVG OFF CACHE BOOL "" FORCE)
 set(LV_BUILD_CONF_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "" FORCE)
 add_definitions(-DLV_CONF_INCLUDE_SIMPLE)
+if(EMSCRIPTEN)
+    add_definitions(-DLV_USE_FREETYPE=0)
+    add_compile_options(-sUSE_SDL=2)
+endif()
 
 # SDL2 parent include for <SDL2/SDL.h>
-if(SDL2_FOUND AND TARGET SDL2::SDL2)
-    get_target_property(_sdl2_inc SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
-    if(_sdl2_inc)
-        foreach(_dir ${_sdl2_inc})
+if(NOT EMSCRIPTEN)
+    if(SDL2_FOUND AND TARGET SDL2::SDL2)
+        get_target_property(_sdl2_inc SDL2::SDL2 INTERFACE_INCLUDE_DIRECTORIES)
+        if(_sdl2_inc)
+            foreach(_dir ${_sdl2_inc})
+                get_filename_component(_parent "${_dir}" DIRECTORY)
+                include_directories("${_parent}")
+            endforeach()
+        endif()
+    else()
+        foreach(_dir ${SDL2_INCLUDE_DIRS})
             get_filename_component(_parent "${_dir}" DIRECTORY)
             include_directories("${_parent}")
         endforeach()
     endif()
-else()
-    foreach(_dir ${SDL2_INCLUDE_DIRS})
-        get_filename_component(_parent "${_dir}" DIRECTORY)
-        include_directories("${_parent}")
-    endforeach()
-endif()
-
-if(FREETYPE_INCLUDE_DIRS)
-    include_directories(${FREETYPE_INCLUDE_DIRS})
+    if(FREETYPE_INCLUDE_DIRS)
+        include_directories(${FREETYPE_INCLUDE_DIRS})
+    endif()
 endif()
 
 # Build LVGL as static, apps export symbols via -rdynamic / POSITION_INDEPENDENT_CODE
@@ -98,6 +102,11 @@ macro(emu_link_deps target)
     find_package(Threads REQUIRED)
     target_link_libraries(${target} PRIVATE Threads::Threads)
 endmacro()
+
+# ===========================================================================
+# Native-only targets (skipped for Emscripten)
+# ===========================================================================
+if(NOT EMSCRIPTEN)
 
 # ---------------------------------------------------------------------------
 # APP: APPLaunch.dylib
@@ -238,3 +247,59 @@ add_custom_command(TARGET cardputer-emu POST_BUILD
         $<TARGET_FILE_DIR:cardputer-emu>/assets/device_skin.png
     COMMENT "Copying apps and resources"
 )
+
+endif() # NOT EMSCRIPTEN — end native targets
+
+# ---------------------------------------------------------------------------
+# Web (Emscripten) target — only built when using emcmake
+# ---------------------------------------------------------------------------
+if(EMSCRIPTEN)
+    # App sources statically linked (no dlopen in wasm)
+    file(GLOB_RECURSE APPLAUNCH_UI_C_WEB   ${APPLAUNCH}/ui/*.c)
+    file(GLOB_RECURSE APPLAUNCH_UI_CPP_WEB ${APPLAUNCH}/ui/*.cpp)
+    file(GLOB         APPLAUNCH_KBD_WEB    ${APPLAUNCH}/src/keyboard_input.c)
+
+    add_executable(cardputer-emu-web
+        src/main_web.cpp
+        src/device_skin.cpp
+        ${APPLAUNCH_UI_C_WEB}
+        ${APPLAUNCH_UI_CPP_WEB}
+        ${APPLAUNCH_KBD_WEB}
+    )
+
+    target_include_directories(cardputer-emu-web PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/compat  # sys/queue.h polyfill
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+        ${CMAKE_CURRENT_SOURCE_DIR}/lib
+        ${APPLAUNCH}/ui
+        ${APPLAUNCH}/include
+        ${APPLAUNCH}
+    )
+
+    target_compile_options(cardputer-emu-web PRIVATE
+        -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h
+        -Wno-c++11-narrowing
+        -DLV_USE_FREETYPE=0
+    )
+
+    target_link_libraries(cardputer-emu-web PRIVATE lvgl)
+
+    # Emscripten SDL2 + SDL2_image ports
+    target_compile_options(cardputer-emu-web PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2)
+    target_link_options(cardputer-emu-web PRIVATE
+        -sUSE_SDL=2
+        -sUSE_SDL_IMAGE=2
+        -sSDL2_IMAGE_FORMATS=["png"]
+        -sALLOW_MEMORY_GROWTH=1
+        -sINITIAL_MEMORY=67108864
+        "--preload-file=${CMAKE_CURRENT_SOURCE_DIR}/assets/device_skin.png@/assets/device_skin.png"
+        "--preload-file=${APPLAUNCH}/ui/images@/share/images"
+        --shell-file ${CMAKE_CURRENT_SOURCE_DIR}/web/shell.html
+    )
+
+    set_target_properties(cardputer-emu-web PROPERTIES
+        SUFFIX ".html"
+        OUTPUT_NAME "index"
+    )
+endif()

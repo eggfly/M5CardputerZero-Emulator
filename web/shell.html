@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>M5CardputerZero Emulator</title>
+<style>
+  body { margin: 0; background: #1a1a2e; display: flex; flex-direction: column;
+         align-items: center; justify-content: center; min-height: 100vh;
+         font-family: -apple-system, sans-serif; color: #eee; }
+  h1 { font-size: 18px; margin: 10px 0 5px; color: #aaa; }
+  canvas { border: 1px solid #333; border-radius: 8px; }
+  #status { margin-top: 8px; font-size: 13px; color: #666; }
+  .spinner { display: inline-block; width: 16px; height: 16px;
+             border: 2px solid #555; border-top-color: #0af;
+             border-radius: 50%; animation: spin 0.8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<h1>M5CardputerZero Emulator</h1>
+<canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="-1"></canvas>
+<div id="status"><span class="spinner"></span> Loading...</div>
+<script>
+  var Module = {
+    canvas: document.getElementById('canvas'),
+    onRuntimeInitialized: function() {
+      document.getElementById('status').textContent = 'Click the device to interact. Keyboard mapped.';
+    }
+  };
+</script>
+{{{ SCRIPT }}}
+</body>
+</html>

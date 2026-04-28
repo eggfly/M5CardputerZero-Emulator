@@ -372,7 +372,9 @@
 #define LV_USE_RLE 0
 #define LV_USE_QRCODE 0
 #define LV_USE_BARCODE 0
+#ifndef LV_USE_FREETYPE
 #define LV_USE_FREETYPE 1
+#endif
 #if LV_USE_FREETYPE
     #define LV_FREETYPE_CACHE_FT_GLYPH_CNT 512
 #endif

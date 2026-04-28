@@ -207,13 +207,12 @@ if(APPLE)
         -Wl,-force_load,$<TARGET_FILE:lvgl>
         -Wl,-force_load,$<TARGET_FILE:lvgl_thorvg>
     )
-elseif(WIN32)
-    # MSVC: /WHOLEARCHIVE
+elseif(MSVC)
     target_link_libraries(cardputer-emu PRIVATE lvgl lvgl_thorvg)
     target_link_options(cardputer-emu PRIVATE
         /WHOLEARCHIVE:lvgl /WHOLEARCHIVE:lvgl_thorvg)
 else()
-    # Linux: --whole-archive
+    # Linux + MinGW: --whole-archive
     target_link_libraries(cardputer-emu PRIVATE
         -Wl,--whole-archive $<TARGET_FILE:lvgl> $<TARGET_FILE:lvgl_thorvg> -Wl,--no-whole-archive
     )

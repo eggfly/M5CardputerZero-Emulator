@@ -226,6 +226,10 @@ static void render()
     SDL_RenderPresent(g_ren);
 }
 
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 typedef void (*ui_init_fn)(void);
 
 // Set working directory to the exe's directory so relative paths work
@@ -247,10 +251,6 @@ static void set_exe_dir()
 #endif
     // Linux: usually launched from the right dir, or use /proc/self/exe
 }
-
-#ifdef __APPLE__
-#include <mach-o/dyld.h>
-#endif
 
 int main(int argc, char *argv[])
 {

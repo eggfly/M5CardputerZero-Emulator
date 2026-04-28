@@ -43,5 +43,23 @@ static inline int ioctl(int fd, unsigned long req, ...) { (void)fd;(void)req; re
 static inline int fcntl(int fd, int cmd, ...) { (void)fd;(void)cmd; return 0; }
 static inline int setenv(const char *n, const char *v, int o) { (void)o; return _putenv_s(n,v); }
 
+// ifaddrs stub (IpPanel network interface enumeration)
+struct ifaddrs {
+    struct ifaddrs *ifa_next;
+    char *ifa_name;
+    unsigned int ifa_flags;
+    struct sockaddr *ifa_addr;
+    struct sockaddr *ifa_netmask;
+    struct sockaddr *ifa_broadaddr;
+    void *ifa_data;
+};
+static inline int getifaddrs(struct ifaddrs **ifap) { *ifap = NULL; return -1; }
+static inline void freeifaddrs(struct ifaddrs *ifa) { (void)ifa; }
+
+// inet_ntop for older MinGW (usually available but just in case)
+#ifndef INET_ADDRSTRLEN
+#define INET_ADDRSTRLEN 16
+#endif
+
 #endif // _WIN32_STUBS
 #endif // _WIN32

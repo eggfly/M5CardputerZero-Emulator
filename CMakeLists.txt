@@ -202,7 +202,7 @@ if(WIN32 AND NOT EMU_SKIP_APPLAUNCH)
             -Wno-c++11-narrowing)
     endif()
     target_compile_definitions(cardputer-emu PRIVATE EMU_STATIC_APP=1)
-    # MinGW: allow weak symbol multiple definitions
+    # MinGW: allow multiple definitions (APPLaunch overrides LVGL's SDL keyboard)
     target_link_options(cardputer-emu PRIVATE -Wl,--allow-multiple-definition)
 elseif(WIN32)
     # Fallback: UserDemo only

@@ -121,7 +121,8 @@ static void draw_key_hl(int r,int c,uint8_t cr,uint8_t cg,uint8_t cb,uint8_t ca)
 }
 
 static void render() {
-    SDL_SetRenderDrawColor(g_ren,0,0,0,255);
+    // Match web page background (#1a1a2e) so skin corners blend
+    SDL_SetRenderDrawColor(g_ren, 0x1a, 0x1a, 0x2e, 255);
     SDL_RenderClear(g_ren);
     SDL_RenderCopy(g_ren,g_skin_tex,nullptr,nullptr);
     SDL_UpdateTexture(g_lcd_tex,nullptr,g_lcd_buf,LCD_W*4);
@@ -169,15 +170,12 @@ int main(int, char*[]) {
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
-    // Scale to fit: 640 wide, maintain aspect ratio
-    int win_w = 640;
-    int win_h = (int)(SKIN_H * 640.0f / SKIN_W); // 640:420
+    // Use skin native resolution for crisp rendering
     g_win=SDL_CreateWindow("M5CardputerZero",
         SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,
-        win_w,win_h,SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE);
+        SKIN_W,SKIN_H,SDL_WINDOW_SHOWN);
     g_ren=SDL_CreateRenderer(g_win,-1,SDL_RENDERER_ACCELERATED);
-    // Logical size = skin size; SDL handles scaling + mouse coord mapping
-    SDL_RenderSetLogicalSize(g_ren, SKIN_W, SKIN_H);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
 
     SDL_Surface *surf=IMG_Load("assets/device_skin.png");
     if(!surf){printf("skin load failed: %s\n",IMG_GetError());return 1;}

@@ -3,3 +3,4 @@ build/
 *.o
 *.a
 *.dylib
+build-web/

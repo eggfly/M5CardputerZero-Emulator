@@ -256,15 +256,17 @@ int main(int argc, char *argv[])
 {
     set_exe_dir();
 
-    // Platform-specific default app path
-#ifdef _WIN32
-    const char *app_path = "apps/libUserDemo.dll";
+#ifdef EMU_STATIC_APP
+    // Windows: app statically linked, no dlopen
+    const char *app_path = "(static-linked UserDemo)";
 #elif defined(__APPLE__)
     const char *app_path = "apps/libAPPLaunch.dylib";
 #else
     const char *app_path = "apps/libAPPLaunch.so";
 #endif
+#ifndef EMU_STATIC_APP
     if (argc > 1) app_path = argv[1];
+#endif
 
     printf("========================================\n");
     printf("  M5CardputerZero Emulator\n");
@@ -310,6 +312,17 @@ int main(int argc, char *argv[])
                            LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
 
+#ifdef EMU_STATIC_APP
+    // Windows: app is statically linked
+    extern "C" void ui_init(void);
+    {
+        lv_indev_t *kb = lv_indev_create();
+        lv_indev_set_type(kb, LV_INDEV_TYPE_KEYPAD);
+        printf("[EMU] Built-in keyboard driver\n");
+    }
+    printf("[EMU] Loaded: %s\n", app_path);
+    ui_init();
+#else
     void *app = emu_dlopen(app_path);
     if (!app) { fprintf(stderr, "[EMU] dlopen: %s\n", emu_dlerror()); return 1; }
     printf("[EMU] Loaded: %s\n", app_path);
@@ -329,6 +342,7 @@ int main(int argc, char *argv[])
     auto init = (ui_init_fn)emu_dlsym(app, "ui_init");
     if (!init) { fprintf(stderr, "[EMU] ui_init missing\n"); return 1; }
     init();
+#endif
     printf("[EMU] Running.\n");
 
     while (true) {
@@ -395,7 +409,9 @@ int main(int argc, char *argv[])
 
 done:
     free(g_lcd_buf);
+#ifndef EMU_STATIC_APP
     emu_dlclose(app);
+#endif
     SDL_DestroyTexture(g_lcd_tex);
     SDL_DestroyTexture(g_skin_tex);
     SDL_DestroyRenderer(g_ren);

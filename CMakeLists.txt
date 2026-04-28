@@ -183,9 +183,18 @@ else()
 endif()
 
 # ---------------------------------------------------------------------------
-# Emulator executable (thin shell — loads app via dlopen)
+# Emulator executable
+# On Windows: statically link UserDemo (DLL would have duplicate LVGL globals)
+# On Unix: thin shell that loads app via dlopen
 # ---------------------------------------------------------------------------
-add_executable(cardputer-emu src/main.cpp src/device_skin.cpp)
+if(WIN32)
+    add_executable(cardputer-emu src/main.cpp src/device_skin.cpp ${USERDEMO_UI_C})
+    target_include_directories(cardputer-emu PRIVATE
+        ${USERDEMO}/ui ${USERDEMO}/include ${USERDEMO})
+    target_compile_definitions(cardputer-emu PRIVATE EMU_STATIC_APP=1)
+else()
+    add_executable(cardputer-emu src/main.cpp src/device_skin.cpp)
+endif()
 add_dependencies(cardputer-emu lvgl lvgl_thorvg)
 # Export all symbols so dlopen'd apps can resolve LVGL functions
 if(APPLE)

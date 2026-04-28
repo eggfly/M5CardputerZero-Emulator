@@ -4,8 +4,21 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#ifdef _WIN32
+#include <windows.h>
+#define usleep(us) Sleep((us)/1000)
+static void *emu_dlopen(const char *p) { return (void*)LoadLibraryA(p); }
+static void *emu_dlsym(void *h, const char *s) { return (void*)GetProcAddress((HMODULE)h,s); }
+static void  emu_dlclose(void *h) { FreeLibrary((HMODULE)h); }
+static const char *emu_dlerror() { static char b[256]; FormatMessageA(FORMAT_MESSAGE_FROM_SYSTEM,0,GetLastError(),0,b,sizeof(b),0); return b; }
+#else
 #include <unistd.h>
 #include <dlfcn.h>
+#define emu_dlopen(p)   dlopen(p, RTLD_NOW | RTLD_GLOBAL)
+#define emu_dlsym(h,s)  dlsym(h,s)
+#define emu_dlclose(h)  dlclose(h)
+#define emu_dlerror()   dlerror()
+#endif
 
 // ── Layout from M5CardputerEmu.png (1280x840 RGBA) ─────────────
 static constexpr int SKIN_W = 1280;
@@ -264,12 +277,12 @@ int main(int argc, char *argv[])
                            LV_DISPLAY_RENDER_MODE_PARTIAL);
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
 
-    void *app = dlopen(app_path, RTLD_NOW | RTLD_GLOBAL);
-    if (!app) { fprintf(stderr, "[EMU] dlopen: %s\n", dlerror()); return 1; }
+    void *app = emu_dlopen(app_path);
+    if (!app) { fprintf(stderr, "[EMU] dlopen: %s\n", emu_dlerror()); return 1; }
     printf("[EMU] Loaded: %s\n", app_path);
 
-    auto kbd_create = (sdl_kbd_create_fn)dlsym(app, "lv_sdl_keyboard_create");
-    g_kbd_handler = (sdl_kbd_handler_fn)dlsym(app, "lv_sdl_keyboard_handler");
+    auto kbd_create = (sdl_kbd_create_fn)emu_dlsym(app, "lv_sdl_keyboard_create");
+    g_kbd_handler = (sdl_kbd_handler_fn)emu_dlsym(app, "lv_sdl_keyboard_handler");
 
     if (kbd_create) {
         kbd_create();
@@ -280,7 +293,7 @@ int main(int argc, char *argv[])
         printf("[EMU] Built-in keyboard driver\n");
     }
 
-    auto init = (ui_init_fn)dlsym(app, "ui_init");
+    auto init = (ui_init_fn)emu_dlsym(app, "ui_init");
     if (!init) { fprintf(stderr, "[EMU] ui_init missing\n"); return 1; }
     init();
     printf("[EMU] Running.\n");
@@ -349,7 +362,7 @@ int main(int argc, char *argv[])
 
 done:
     free(g_lcd_buf);
-    dlclose(app);
+    emu_dlclose(app);
     SDL_DestroyTexture(g_lcd_tex);
     SDL_DestroyTexture(g_skin_tex);
     SDL_DestroyRenderer(g_ren);

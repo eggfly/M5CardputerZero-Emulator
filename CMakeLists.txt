@@ -174,6 +174,7 @@ endif()
 # Emulator executable (thin shell — loads app via dlopen)
 # ---------------------------------------------------------------------------
 add_executable(cardputer-emu src/main.cpp src/device_skin.cpp)
+add_dependencies(cardputer-emu lvgl lvgl_thorvg)
 # Export all symbols so dlopen'd apps can resolve LVGL functions
 if(APPLE)
     set_target_properties(cardputer-emu PROPERTIES ENABLE_EXPORTS ON)
@@ -241,11 +242,12 @@ else()
     target_link_libraries(cardputer-emu PRIVATE freetype)
 endif()
 
-# dl (for dlopen)
-target_link_libraries(cardputer-emu PRIVATE ${CMAKE_DL_LIBS})
-
-find_package(Threads REQUIRED)
-target_link_libraries(cardputer-emu PRIVATE Threads::Threads)
+# dl (for dlopen) + threads
+if(NOT WIN32)
+    target_link_libraries(cardputer-emu PRIVATE ${CMAKE_DL_LIBS})
+    find_package(Threads REQUIRED)
+    target_link_libraries(cardputer-emu PRIVATE Threads::Threads)
+endif()
 
 # ---------------------------------------------------------------------------
 # Post-build: copy apps and resources into build/apps/

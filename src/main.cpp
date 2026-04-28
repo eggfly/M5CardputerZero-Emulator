@@ -10,7 +10,7 @@
 // ── Layout from M5CardputerEmu.png (1280x840 RGBA) ─────────────
 static constexpr int SKIN_W = 1280;
 static constexpr int SKIN_H = 840;
-static constexpr int LCD_SX = 325;
+static constexpr int LCD_SX = 323;
 static constexpr int LCD_SY = 60;
 static constexpr int LCD_SW = 639;
 static constexpr int LCD_SH = 339;
@@ -21,31 +21,31 @@ static constexpr float SCALE = 0.5f;
 struct KeyRect { int x, y, w, h; SDL_Keycode key; };
 static KeyRect g_keys[4][11] = {
     // Row 0: 1-0 del
-    {{51,461,70,41,SDLK_1},{162,461,71,42,SDLK_2},{274,461,71,41,SDLK_3},{386,461,71,41,SDLK_4},
-     {497,461,71,41,SDLK_5},{610,461,69,41,SDLK_6},{720,461,71,42,SDLK_7},{832,461,71,42,SDLK_8},
-     {944,461,70,42,SDLK_9},{1056,461,71,41,SDLK_0},{1168,461,70,42,SDLK_BACKSPACE}},
+    {{49,461,70,41,SDLK_1},{160,461,71,42,SDLK_2},{272,461,71,41,SDLK_3},{384,461,71,41,SDLK_4},
+     {495,461,71,41,SDLK_5},{608,461,69,41,SDLK_6},{718,461,71,42,SDLK_7},{830,461,71,42,SDLK_8},
+     {942,461,70,42,SDLK_9},{1054,461,71,41,SDLK_0},{1166,461,70,42,SDLK_BACKSPACE}},
     // Row 1: tab Q-P
-    {{51,558,71,42,SDLK_TAB},{162,558,71,42,SDLK_q},{274,558,71,42,SDLK_w},{386,558,70,42,SDLK_e},
-     {497,558,71,42,SDLK_r},{610,558,69,42,SDLK_t},{720,558,71,42,SDLK_y},{832,558,71,42,SDLK_u},
-     {944,558,70,42,SDLK_i},{1056,558,71,42,SDLK_o},{1168,558,70,42,SDLK_p}},
+    {{49,558,71,42,SDLK_TAB},{160,558,71,42,SDLK_q},{272,558,71,42,SDLK_w},{384,558,70,42,SDLK_e},
+     {495,558,71,42,SDLK_r},{608,558,69,42,SDLK_t},{718,558,71,42,SDLK_y},{830,558,71,42,SDLK_u},
+     {942,558,70,42,SDLK_i},{1054,558,71,42,SDLK_o},{1166,558,70,42,SDLK_p}},
     // Row 2: Aa A-L OK
-    {{51,655,70,41,SDLK_LSHIFT},{162,655,71,41,SDLK_a},{274,655,71,41,SDLK_s},{386,655,70,41,SDLK_d},
-     {497,655,71,41,SDLK_f},{610,655,69,41,SDLK_g},{720,655,71,41,SDLK_h},{832,655,71,41,SDLK_j},
-     {944,655,70,41,SDLK_k},{1056,655,71,42,SDLK_l},{1168,655,70,41,SDLK_RETURN}},
+    {{49,655,70,41,SDLK_LSHIFT},{160,655,71,41,SDLK_a},{272,655,71,41,SDLK_s},{384,655,70,41,SDLK_d},
+     {495,655,71,41,SDLK_f},{608,655,69,41,SDLK_g},{718,655,71,41,SDLK_h},{830,655,71,41,SDLK_j},
+     {942,655,70,41,SDLK_k},{1054,655,71,42,SDLK_l},{1166,655,70,41,SDLK_RETURN}},
     // Row 3: fn ctrl alt Z X C V B N M space
-    {{51,752,70,41,SDLK_ESCAPE},{162,752,71,41,SDLK_LCTRL},{274,752,71,41,SDLK_LALT},
-     {386,752,70,41,SDLK_z},{497,752,71,41,SDLK_x},{610,752,69,41,SDLK_c},
-     {720,752,71,41,SDLK_v},{832,752,71,41,SDLK_b},{944,752,70,41,SDLK_n},
-     {1056,752,71,41,SDLK_m},{1168,752,70,41,SDLK_SPACE}},
+    {{49,752,70,41,SDLK_ESCAPE},{160,752,71,41,SDLK_LCTRL},{272,752,71,41,SDLK_LALT},
+     {384,752,70,41,SDLK_z},{495,752,71,41,SDLK_x},{608,752,69,41,SDLK_c},
+     {718,752,71,41,SDLK_v},{830,752,71,41,SDLK_b},{942,752,70,41,SDLK_n},
+     {1054,752,71,41,SDLK_m},{1166,752,70,41,SDLK_SPACE}},
 };
 
 // ── Side buttons (ESC/HOME left, TALK/NEXT right) ───────────────
 static constexpr int NUM_SIDE_KEYS = 4;
 static KeyRect g_side_keys[NUM_SIDE_KEYS] = {
-    {51,  380, 70, 40, SDLK_ESCAPE},  // ESC (left)
-    {160, 380, 70, 40, SDLK_HOME},    // HOME (left)
-    {1060,380, 70, 40, SDLK_F3},      // TALK (right) — mapped to F3
-    {1168,380, 70, 40, SDLK_TAB},     // NEXT/tab (right)
+    {49,  380, 70, 40, SDLK_ESCAPE},  // ESC (left)
+    {158, 380, 70, 40, SDLK_HOME},    // HOME (left)
+    {1058,380, 70, 40, SDLK_F3},      // TALK (right) — mapped to F3
+    {1166,380, 70, 40, SDLK_TAB},     // NEXT/tab (right)
 };
 
 // ── Modifier key indices ────────────────────────────────────────

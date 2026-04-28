@@ -54,8 +54,9 @@ if(EMSCRIPTEN OR WIN32)
     add_definitions(-DLV_USE_FREETYPE=0)
 endif()
 if(EMSCRIPTEN)
-    add_compile_options(-sUSE_SDL=2 -sUSE_PTHREADS=1)
-    add_link_options(-sUSE_PTHREADS=1)
+    add_compile_options(-sUSE_SDL=2)
+    # Use compat/pthread.h stub instead of real pthreads (single-threaded)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/src/compat)
 endif()
 
 # SDL2 parent include for <SDL2/SDL.h>
@@ -316,11 +317,10 @@ if(EMSCRIPTEN)
     target_link_libraries(cardputer-emu-web PRIVATE lvgl)
 
     # Emscripten SDL2 + SDL2_image ports
-    target_compile_options(cardputer-emu-web PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -pthread)
+    target_compile_options(cardputer-emu-web PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2)
     target_link_options(cardputer-emu-web PRIVATE
         -sUSE_SDL=2
         -sUSE_SDL_IMAGE=2
-        -pthread
         -sSDL2_IMAGE_FORMATS=["png"]
         -sALLOW_MEMORY_GROWTH=1
         -sINITIAL_MEMORY=67108864

@@ -187,7 +187,21 @@ endif()
 # On Windows: statically link UserDemo (DLL would have duplicate LVGL globals)
 # On Unix: thin shell that loads app via dlopen
 # ---------------------------------------------------------------------------
-if(WIN32)
+if(WIN32 AND NOT EMU_SKIP_APPLAUNCH)
+    # Windows: statically link APPLaunch (avoids DLL duplicate LVGL globals)
+    add_executable(cardputer-emu src/main.cpp src/device_skin.cpp
+        ${APPLAUNCH_UI_C} ${APPLAUNCH_UI_CPP} ${APPLAUNCH_KBD})
+    target_include_directories(cardputer-emu PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/compat  # win32_stubs.h, sys/queue.h
+        ${APPLAUNCH}/ui ${APPLAUNCH}/include ${APPLAUNCH})
+    if(WIN32)
+        target_compile_options(cardputer-emu PRIVATE
+            "SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat_win.h"
+            -Wno-c++11-narrowing)
+    endif()
+    target_compile_definitions(cardputer-emu PRIVATE EMU_STATIC_APP=1)
+elseif(WIN32)
+    # Fallback: UserDemo only
     add_executable(cardputer-emu src/main.cpp src/device_skin.cpp ${USERDEMO_UI_C})
     target_include_directories(cardputer-emu PRIVATE
         ${USERDEMO}/ui ${USERDEMO}/include ${USERDEMO})

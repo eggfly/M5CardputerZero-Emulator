@@ -60,7 +60,7 @@ jobs:
     - name: Build
       run: |
         mkdir build && cd build
-        cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DEMU_SKIP_APPLAUNCH=ON
+        cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
     - name: Package
       run: |

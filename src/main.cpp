@@ -251,7 +251,11 @@ static void render()
 typedef void (*ui_init_fn)(void);
 
 #ifdef EMU_STATIC_APP
-extern "C" void ui_init(void);
+extern "C" {
+    void ui_init(void);
+    void *lv_sdl_keyboard_create(void);
+    void lv_sdl_keyboard_handler(SDL_Event *event);
+}
 #endif
 
 // Set working directory to the exe's directory so relative paths work
@@ -335,15 +339,10 @@ int main(int argc, char *argv[])
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
 
 #ifdef EMU_STATIC_APP
-    // Windows: app is statically linked, simple keypad indev
-    {
-        lv_indev_t *kb = lv_indev_create();
-        lv_indev_set_type(kb, LV_INDEV_TYPE_KEYPAD);
-        lv_indev_set_read_cb(kb, [](lv_indev_t*, lv_indev_data_t *d) {
-            d->state = LV_INDEV_STATE_RELEASED;
-        });
-        printf("[EMU] Built-in keyboard driver\n");
-    }
+    // Static linked app (Windows/Web): call directly
+    g_kbd_handler = (sdl_kbd_handler_fn)lv_sdl_keyboard_handler;
+    lv_sdl_keyboard_create();
+    printf("[EMU] App keyboard driver (static)\n");
     printf("[EMU] Loaded: %s\n", app_path);
     ui_init();
 #else

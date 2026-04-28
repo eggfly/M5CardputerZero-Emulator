@@ -14,6 +14,7 @@
 #define WEXITSTATUS(s) ((s) & 0xff)
 #define WIFEXITED(s) 1
 #define WIFSIGNALED(s) 0
+#define WTERMSIG(s) 0
 #define WNOHANG 1
 #endif
 

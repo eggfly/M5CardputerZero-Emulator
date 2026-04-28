@@ -29,10 +29,11 @@ static KeyRect g_keys[4][11] = {
     {{51,655,70,41,SDLK_LSHIFT},{162,655,71,41,SDLK_a},{274,655,71,41,SDLK_s},{386,655,70,41,SDLK_d},
      {497,655,71,41,SDLK_f},{610,655,69,41,SDLK_g},{720,655,71,41,SDLK_h},{832,655,71,41,SDLK_j},
      {944,655,70,41,SDLK_k},{1056,655,71,42,SDLK_l},{1168,655,70,41,SDLK_RETURN}},
-    {{51,752,70,41,SDLK_ESCAPE},{162,752,71,41,SDLK_LCTRL},{274,752,71,41,SDLK_LALT},
-     {386,752,70,41,SDLK_z},{497,752,71,41,SDLK_x},{610,752,69,41,SDLK_c},
-     {720,752,71,41,SDLK_v},{832,752,71,41,SDLK_b},{944,752,70,41,SDLK_n},
-     {1056,752,71,41,SDLK_m},{1168,752,70,41,SDLK_SPACE}},
+    // Row 3: fn ctrl Z X C V B N M '. space
+    {{51,752,70,41,SDLK_ESCAPE},{162,752,71,41,SDLK_LCTRL},{274,752,71,41,SDLK_z},
+     {386,752,70,41,SDLK_x},{497,752,71,41,SDLK_c},{610,752,69,41,SDLK_v},
+     {720,752,71,41,SDLK_b},{832,752,71,41,SDLK_n},{944,752,70,41,SDLK_m},
+     {1056,752,71,41,SDLK_PERIOD},{1168,752,70,41,SDLK_SPACE}},
 };
 
 static int g_pr = -1, g_pc = -1;
@@ -220,7 +221,9 @@ int main(int argc, char *argv[])
                 int r, c;
                 if (hit_key(ev.button.x, ev.button.y, &r, &c)) {
                     g_pr = r; g_pc = c;
-                    printf("[EMU] vkey click row=%d col=%d sdlk=%d\n", r, c, g_keys[r][c].key);
+                    printf("[EMU] vkey click row=%d col=%d sdlk=%d mouse=(%d,%d) skin=(%d,%d)\n",
+                           r, c, g_keys[r][c].key, ev.button.x, ev.button.y,
+                           (int)(ev.button.x/SCALE), (int)(ev.button.y/SCALE));
                     inject_sdl_key(g_keys[r][c].key, true);
                 }
             }

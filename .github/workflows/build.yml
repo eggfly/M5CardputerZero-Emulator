@@ -80,12 +80,12 @@ jobs:
         for dll in SDL2.dll SDL2_image.dll libfreetype-6.dll libpng16-16.dll zlib1.dll libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
           cp /mingw64/bin/$dll dist/M5CardputerZero-Emulator/ 2>/dev/null || true
         done
-        cd dist && 7z a ../M5CardputerZero-Emulator-Windows.zip M5CardputerZero-Emulator
+        cd dist && tar czf ../M5CardputerZero-Emulator-Windows.tar.gz M5CardputerZero-Emulator
 
     - uses: actions/upload-artifact@v4
       with:
         name: emulator-windows
-        path: M5CardputerZero-Emulator-Windows.zip
+        path: M5CardputerZero-Emulator-Windows.tar.gz
 
   # ── Linux (Ubuntu) ──────────────────────────────────────────
   linux:

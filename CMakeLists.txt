@@ -315,10 +315,11 @@ if(EMSCRIPTEN)
     target_link_libraries(cardputer-emu-web PRIVATE lvgl)
 
     # Emscripten SDL2 + SDL2_image ports
-    target_compile_options(cardputer-emu-web PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2)
+    target_compile_options(cardputer-emu-web PRIVATE -sUSE_SDL=2 -sUSE_SDL_IMAGE=2 -pthread)
     target_link_options(cardputer-emu-web PRIVATE
         -sUSE_SDL=2
         -sUSE_SDL_IMAGE=2
+        -pthread
         -sSDL2_IMAGE_FORMATS=["png"]
         -sALLOW_MEMORY_GROWTH=1
         -sINITIAL_MEMORY=67108864

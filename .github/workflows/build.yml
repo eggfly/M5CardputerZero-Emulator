@@ -39,40 +39,47 @@ jobs:
         name: emulator-macos
         path: M5CardputerZero-Emulator-macOS.tar.gz
 
-  # ── Windows (MSVC + vcpkg) ──────────────────────────────────
+  # ── Windows (MinGW-w64 — MSVC can't compile APPLaunch's GCC extensions) ──
   windows:
     runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
     steps:
+    - uses: msys2/setup-msys2@v2
+      with:
+        msystem: MINGW64
+        install: >-
+          mingw-w64-x86_64-gcc
+          mingw-w64-x86_64-cmake
+          mingw-w64-x86_64-SDL2
+          mingw-w64-x86_64-SDL2_image
+          mingw-w64-x86_64-freetype
+          make
+          git
+
     - uses: actions/checkout@v4
       with:
         submodules: recursive
 
-    - name: Install vcpkg packages
-      run: |
-        vcpkg install sdl2:x64-windows sdl2-image:x64-windows freetype:x64-windows
-
     - name: Build
       run: |
         mkdir build && cd build
-        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
-        cmake --build . --config Release -j $env:NUMBER_OF_PROCESSORS
+        cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release
+        make -j$(nproc)
 
     - name: Package
-      shell: pwsh
       run: |
-        New-Item -ItemType Directory -Force -Path dist\M5CardputerZero-Emulator
-        # Find the exe (may be in Release/ or root)
-        $exe = Get-ChildItem -Path build -Recurse -Filter "cardputer-emu.exe" | Select-Object -First 1
-        Copy-Item $exe.FullName dist\M5CardputerZero-Emulator\
-        if (Test-Path build\apps) { Copy-Item -Recurse build\apps dist\M5CardputerZero-Emulator\ }
-        if (Test-Path build\Release\apps) { Copy-Item -Recurse build\Release\apps dist\M5CardputerZero-Emulator\ }
-        Copy-Item -Recurse build\assets dist\M5CardputerZero-Emulator\ -ErrorAction SilentlyContinue
-        Copy-Item -Recurse build\share dist\M5CardputerZero-Emulator\ -ErrorAction SilentlyContinue
-        # Copy runtime DLLs
-        Get-ChildItem "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\*.dll" | ForEach-Object {
-          Copy-Item $_.FullName dist\M5CardputerZero-Emulator\
-        }
-        Compress-Archive -Path dist\M5CardputerZero-Emulator -DestinationPath M5CardputerZero-Emulator-Windows.zip
+        mkdir -p dist/M5CardputerZero-Emulator
+        cp build/cardputer-emu.exe dist/M5CardputerZero-Emulator/
+        cp -r build/apps dist/M5CardputerZero-Emulator/ 2>/dev/null || true
+        cp -r build/assets dist/M5CardputerZero-Emulator/ 2>/dev/null || true
+        cp -r build/share dist/M5CardputerZero-Emulator/ 2>/dev/null || true
+        # Copy MinGW runtime DLLs
+        for dll in SDL2.dll SDL2_image.dll libfreetype-6.dll libpng16-16.dll zlib1.dll libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
+          cp /mingw64/bin/$dll dist/M5CardputerZero-Emulator/ 2>/dev/null || true
+        done
+        cd dist && 7z a ../M5CardputerZero-Emulator-Windows.zip M5CardputerZero-Emulator
 
     - uses: actions/upload-artifact@v4
       with:

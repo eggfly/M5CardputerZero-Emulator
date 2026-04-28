@@ -39,6 +39,15 @@ static KeyRect g_keys[4][11] = {
      {1056,752,71,41,SDLK_m},{1168,752,70,41,SDLK_SPACE}},
 };
 
+// ── Side buttons (ESC/HOME left, TALK/NEXT right) ───────────────
+static constexpr int NUM_SIDE_KEYS = 4;
+static KeyRect g_side_keys[NUM_SIDE_KEYS] = {
+    {51,  380, 70, 40, SDLK_ESCAPE},  // ESC (left)
+    {160, 380, 70, 40, SDLK_HOME},    // HOME (left)
+    {1060,380, 70, 40, SDLK_F3},      // TALK (right) — mapped to F3
+    {1168,380, 70, 40, SDLK_TAB},     // NEXT/tab (right)
+};
+
 // ── Modifier key indices ────────────────────────────────────────
 // SYM = row1,col0   Aa = row2,col0   fn = row3,col0   ctrl = row3,col1   alt = row3,col2
 #define MOD_SYM_R  1
@@ -89,6 +98,8 @@ static sdl_kbd_handler_fn g_kbd_handler = nullptr;
 
 static float g_dpi_scale = 1.0f;  // renderer_pixels / window_points
 
+static int g_side_pr = -1;  // pressed side key index
+
 static bool hit_key(int mx, int my, int *r, int *c)
 {
     int sx = (int)(mx * g_dpi_scale), sy = (int)(my * g_dpi_scale);
@@ -99,6 +110,17 @@ static bool hit_key(int mx, int my, int *r, int *c)
                 { *r = i; *c = j; return true; }
         }
     return false;
+}
+
+static int hit_side_key(int mx, int my)
+{
+    int sx = (int)(mx * g_dpi_scale), sy = (int)(my * g_dpi_scale);
+    for (int i = 0; i < NUM_SIDE_KEYS; i++) {
+        auto &k = g_side_keys[i];
+        if (sx >= k.x && sx < k.x+k.w && sy >= k.y && sy < k.y+k.h)
+            return i;
+    }
+    return -1;
 }
 
 // ── LVGL flush: RGB565 → ARGB8888 ──────────────────────────────
@@ -175,6 +197,15 @@ static void render()
     // Normal key press highlight (red flash)
     if (g_pr >= 0 && !is_modifier(g_pr, g_pc)) {
         draw_key_highlight(g_pr, g_pc, 255, 50, 50, 100);
+    }
+
+    // Side key press highlight
+    if (g_side_pr >= 0) {
+        auto &k = g_side_keys[g_side_pr];
+        SDL_SetRenderDrawBlendMode(g_ren, SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(g_ren, 255, 50, 50, 100);
+        SDL_Rect kr = {k.x, k.y, k.w, k.h};
+        SDL_RenderFillRect(g_ren, &kr);
     }
 
     SDL_RenderPresent(g_ren);
@@ -259,21 +290,27 @@ int main(int argc, char *argv[])
 
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
                 int r, c;
-                if (hit_key(ev.button.x, ev.button.y, &r, &c)) {
+                int side = hit_side_key(ev.button.x, ev.button.y);
+                if (side >= 0) {
+                    g_side_pr = side;
+                    inject_sdl_key(g_side_keys[side].key, true);
+                } else if (hit_key(ev.button.x, ev.button.y, &r, &c)) {
                     if (is_modifier(r, c)) {
-                        // Toggle modifier on click
                         toggle_modifier(r, c);
-                        printf("[EMU] modifiers: SYM=%d Aa=%d fn=%d ctrl=%d alt=%d\n",
-                               g_mod_sym, g_mod_aa, g_mod_fn, g_mod_ctrl, g_mod_alt);
                     } else {
                         g_pr = r; g_pc = c;
                         inject_sdl_key(g_keys[r][c].key, true);
                     }
                 }
             }
-            else if (ev.type == SDL_MOUSEBUTTONUP && g_pr >= 0) {
-                inject_sdl_key(g_keys[g_pr][g_pc].key, false);
-                g_pr = -1;
+            else if (ev.type == SDL_MOUSEBUTTONUP) {
+                if (g_side_pr >= 0) {
+                    inject_sdl_key(g_side_keys[g_side_pr].key, false);
+                    g_side_pr = -1;
+                } else if (g_pr >= 0) {
+                    inject_sdl_key(g_keys[g_pr][g_pc].key, false);
+                    g_pr = -1;
+                }
             }
             else if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP ||
                      ev.type == SDL_TEXTINPUT) {

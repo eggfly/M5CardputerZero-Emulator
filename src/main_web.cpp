@@ -41,6 +41,24 @@ static KeyRect g_keys[4][11] = {
      {1056,752,71,41,SDLK_m},{1168,752,70,41,SDLK_SPACE}},
 };
 
+// Side buttons (ESC/HOME left, TALK/NEXT right)
+static constexpr int NUM_SIDE_KEYS = 4;
+static KeyRect g_side_keys[NUM_SIDE_KEYS] = {
+    {51,  380, 70, 40, SDLK_ESCAPE},
+    {160, 380, 70, 40, SDLK_HOME},
+    {1060,380, 70, 40, SDLK_F3},
+    {1168,380, 70, 40, SDLK_TAB},
+};
+static int g_side_pr = -1;
+
+static int hit_side(int mx, int my) {
+    for(int i=0;i<NUM_SIDE_KEYS;i++){
+        auto &k=g_side_keys[i];
+        if(mx>=k.x&&mx<k.x+k.w&&my>=k.y&&my<k.y+k.h) return i;
+    }
+    return -1;
+}
+
 // Modifiers
 #define MOD_SYM_R 1
 #define MOD_SYM_C 0
@@ -135,6 +153,13 @@ static void render() {
     if(g_mod_ctrl) draw_key_hl(MOD_CTRL_R,MOD_CTRL_C,50,120,255,120);
     if(g_mod_alt)  draw_key_hl(MOD_ALT_R,MOD_ALT_C,220,220,0,120);
     if(g_pr>=0&&!is_modifier(g_pr,g_pc)) draw_key_hl(g_pr,g_pc,255,50,50,100);
+    if(g_side_pr>=0){
+        auto &k=g_side_keys[g_side_pr];
+        SDL_SetRenderDrawBlendMode(g_ren,SDL_BLENDMODE_BLEND);
+        SDL_SetRenderDrawColor(g_ren,255,50,50,100);
+        SDL_Rect kr={k.x,k.y,k.w,k.h};
+        SDL_RenderFillRect(g_ren,&kr);
+    }
     SDL_RenderPresent(g_ren);
 }
 
@@ -142,13 +167,16 @@ static void main_loop() {
     SDL_Event ev;
     while(SDL_PollEvent(&ev)) {
         if(ev.type==SDL_MOUSEBUTTONDOWN) {
-            int r,c;
+            int side=hit_side(ev.button.x,ev.button.y);
+            if(side>=0){g_side_pr=side;inject_sdl_key(g_side_keys[side].key,true);}
+            else{int r,c;
             if(hit_key(ev.button.x,ev.button.y,&r,&c)){
                 if(is_modifier(r,c)) toggle_modifier(r,c);
                 else{g_pr=r;g_pc=c;inject_sdl_key(g_keys[r][c].key,true);}
-            }
-        } else if(ev.type==SDL_MOUSEBUTTONUP&&g_pr>=0) {
-            inject_sdl_key(g_keys[g_pr][g_pc].key,false);g_pr=-1;
+            }}
+        } else if(ev.type==SDL_MOUSEBUTTONUP) {
+            if(g_side_pr>=0){inject_sdl_key(g_side_keys[g_side_pr].key,false);g_side_pr=-1;}
+            else if(g_pr>=0){inject_sdl_key(g_keys[g_pr][g_pc].key,false);g_pr=-1;}
         } else if(ev.type==SDL_KEYDOWN||ev.type==SDL_KEYUP||ev.type==SDL_TEXTINPUT) {
             if(g_kbd_handler) g_kbd_handler(&ev);
         }

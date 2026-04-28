@@ -169,10 +169,15 @@ int main(int, char*[]) {
     SDL_Init(SDL_INIT_VIDEO);
     IMG_Init(IMG_INIT_PNG);
 
+    // Scale to fit: 640 wide, maintain aspect ratio
+    int win_w = 640;
+    int win_h = (int)(SKIN_H * 640.0f / SKIN_W); // 640:420
     g_win=SDL_CreateWindow("M5CardputerZero",
         SDL_WINDOWPOS_CENTERED,SDL_WINDOWPOS_CENTERED,
-        SKIN_W,SKIN_H,SDL_WINDOW_SHOWN);
+        win_w,win_h,SDL_WINDOW_SHOWN|SDL_WINDOW_RESIZABLE);
     g_ren=SDL_CreateRenderer(g_win,-1,SDL_RENDERER_ACCELERATED);
+    // Logical size = skin size; SDL handles scaling + mouse coord mapping
+    SDL_RenderSetLogicalSize(g_ren, SKIN_W, SKIN_H);
 
     SDL_Surface *surf=IMG_Load("assets/device_skin.png");
     if(!surf){printf("skin load failed: %s\n",IMG_GetError());return 1;}

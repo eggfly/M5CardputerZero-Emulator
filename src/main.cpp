@@ -87,9 +87,11 @@ typedef void (*sdl_kbd_handler_fn)(SDL_Event *);
 typedef void *(*sdl_kbd_create_fn)(void);
 static sdl_kbd_handler_fn g_kbd_handler = nullptr;
 
+static float g_dpi_scale = 1.0f;  // renderer_pixels / window_points
+
 static bool hit_key(int mx, int my, int *r, int *c)
 {
-    int sx = (int)(mx / SCALE), sy = (int)(my / SCALE);
+    int sx = (int)(mx * g_dpi_scale), sy = (int)(my * g_dpi_scale);
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 11; j++) {
             auto &k = g_keys[i][j];
@@ -145,8 +147,7 @@ static void draw_key_highlight(int r, int c, uint8_t cr, uint8_t cg, uint8_t cb,
     auto &k = g_keys[r][c];
     SDL_SetRenderDrawBlendMode(g_ren, SDL_BLENDMODE_BLEND);
     SDL_SetRenderDrawColor(g_ren, cr, cg, cb, ca);
-    SDL_Rect kr = {(int)(k.x*SCALE),(int)(k.y*SCALE),
-                   (int)(k.w*SCALE),(int)(k.h*SCALE)};
+    SDL_Rect kr = {k.x, k.y, k.w, k.h};
     SDL_RenderFillRect(g_ren, &kr);
 }
 
@@ -157,9 +158,9 @@ static void render()
 
     SDL_RenderCopy(g_ren, g_skin_tex, nullptr, nullptr);
 
+    // In HIGHDPI mode, renderer is 1:1 with skin pixels
     SDL_UpdateTexture(g_lcd_tex, nullptr, g_lcd_buf, LCD_W * 4);
-    SDL_Rect lcd_dst = {(int)(LCD_SX*SCALE),(int)(LCD_SY*SCALE),
-                        (int)(LCD_SW*SCALE),(int)(LCD_SH*SCALE)};
+    SDL_Rect lcd_dst = {LCD_SX, LCD_SY, LCD_SW, LCD_SH};
     SDL_RenderCopy(g_ren, g_lcd_tex, nullptr, &lcd_dst);
 
     SDL_RenderCopy(g_ren, g_skin_tex, nullptr, nullptr);
@@ -198,11 +199,19 @@ int main(int argc, char *argv[])
     IMG_Init(IMG_INIT_PNG);
 
     int win_w = (int)(SKIN_W * SCALE), win_h = (int)(SKIN_H * SCALE);
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
     g_win = SDL_CreateWindow("M5CardputerZero Emulator",
         SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED,
-        win_w, win_h, SDL_WINDOW_SHOWN);
+        win_w, win_h, SDL_WINDOW_SHOWN | SDL_WINDOW_ALLOW_HIGHDPI);
     g_ren = SDL_CreateRenderer(g_win, -1,
         SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+
+    // On Retina, renderer output is 2x the window size
+    int render_w, render_h;
+    SDL_GetRendererOutputSize(g_ren, &render_w, &render_h);
+    g_dpi_scale = (float)render_w / (float)win_w;
+    printf("[EMU] Window: %dx%d  Renderer: %dx%d  DPI scale: %.1f\n",
+           win_w, win_h, render_w, render_h, g_dpi_scale);
 
     SDL_Surface *surf = IMG_Load("assets/device_skin.png");
     if (!surf) { fprintf(stderr, "skin: %s\n", IMG_GetError()); return 1; }

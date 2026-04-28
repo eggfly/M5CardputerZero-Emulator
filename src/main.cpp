@@ -251,8 +251,10 @@ static void render()
 typedef void (*ui_init_fn)(void);
 
 #ifdef EMU_STATIC_APP
-extern "C" void ui_init(void);
-// lv_sdl_keyboard_create/handler declared in LVGL headers (overridden by APPLaunch)
+extern "C" {
+    void ui_init(void);
+    void lv_sdl_keyboard_handler(SDL_Event *event);
+}
 #endif
 
 // Set working directory to the exe's directory so relative paths work
@@ -336,12 +338,9 @@ int main(int argc, char *argv[])
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
 
 #ifdef EMU_STATIC_APP
-    // Static linked app (Windows/Web): call directly
-    {
-        extern void lv_sdl_keyboard_handler(SDL_Event *);
-        g_kbd_handler = (sdl_kbd_handler_fn)lv_sdl_keyboard_handler;
-    }
+    // Static linked: APPLaunch overrides lv_sdl_keyboard_create/handler
     lv_sdl_keyboard_create();
+    g_kbd_handler = lv_sdl_keyboard_handler;
     printf("[EMU] App keyboard driver (static)\n");
     printf("[EMU] Loaded: %s\n", app_path);
     ui_init();

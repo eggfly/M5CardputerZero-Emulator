@@ -202,6 +202,8 @@ if(WIN32 AND NOT EMU_SKIP_APPLAUNCH)
             -Wno-c++11-narrowing)
     endif()
     target_compile_definitions(cardputer-emu PRIVATE EMU_STATIC_APP=1)
+    # MinGW: allow weak symbol multiple definitions
+    target_link_options(cardputer-emu PRIVATE -Wl,--allow-multiple-definition)
 elseif(WIN32)
     # Fallback: UserDemo only
     add_executable(cardputer-emu src/main.cpp src/device_skin.cpp ${USERDEMO_UI_C})
@@ -236,8 +238,11 @@ elseif(MSVC)
     target_link_libraries(cardputer-emu PRIVATE lvgl lvgl_thorvg)
     target_link_options(cardputer-emu PRIVATE
         /WHOLEARCHIVE:lvgl /WHOLEARCHIVE:lvgl_thorvg)
+elseif(WIN32)
+    # MinGW: no whole-archive (app is static-linked, no DLL symbol export needed)
+    target_link_libraries(cardputer-emu PRIVATE lvgl lvgl_thorvg)
 else()
-    # Linux + MinGW: --whole-archive
+    # Linux: --whole-archive for dlopen'd apps
     target_link_libraries(cardputer-emu PRIVATE
         -Wl,--whole-archive $<TARGET_FILE:lvgl> $<TARGET_FILE:lvgl_thorvg> -Wl,--no-whole-archive
     )

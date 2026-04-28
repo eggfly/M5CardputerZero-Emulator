@@ -251,11 +251,8 @@ static void render()
 typedef void (*ui_init_fn)(void);
 
 #ifdef EMU_STATIC_APP
-extern "C" {
-    void ui_init(void);
-    void *lv_sdl_keyboard_create(void);
-    void lv_sdl_keyboard_handler(SDL_Event *event);
-}
+extern "C" void ui_init(void);
+// lv_sdl_keyboard_create/handler declared in LVGL headers (overridden by APPLaunch)
 #endif
 
 // Set working directory to the exe's directory so relative paths work
@@ -340,7 +337,10 @@ int main(int argc, char *argv[])
 
 #ifdef EMU_STATIC_APP
     // Static linked app (Windows/Web): call directly
-    g_kbd_handler = (sdl_kbd_handler_fn)lv_sdl_keyboard_handler;
+    {
+        extern void lv_sdl_keyboard_handler(SDL_Event *);
+        g_kbd_handler = (sdl_kbd_handler_fn)lv_sdl_keyboard_handler;
+    }
     lv_sdl_keyboard_create();
     printf("[EMU] App keyboard driver (static)\n");
     printf("[EMU] Loaded: %s\n", app_path);

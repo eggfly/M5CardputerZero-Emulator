@@ -50,9 +50,11 @@ set(LV_CONF_BUILD_DISABLE_EXAMPLES ON CACHE BOOL "" FORCE)
 set(LV_CONF_BUILD_DISABLE_THORVG OFF CACHE BOOL "" FORCE)
 set(LV_BUILD_CONF_DIR "${CMAKE_CURRENT_SOURCE_DIR}" CACHE PATH "" FORCE)
 add_definitions(-DLV_CONF_INCLUDE_SIMPLE)
-if(EMSCRIPTEN)
+if(EMSCRIPTEN OR WIN32)
     add_definitions(-DLV_USE_FREETYPE=0)
-    add_compile_options(-sUSE_SDL=2)
+endif()
+if(EMSCRIPTEN)
+    add_compile_options(-sUSE_SDL=2 -pthread)
 endif()
 
 # SDL2 parent include for <SDL2/SDL.h>

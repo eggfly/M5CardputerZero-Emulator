@@ -303,7 +303,7 @@ add_custom_command(TARGET cardputer-emu POST_BUILD
         $<TARGET_FILE_DIR:cardputer-emu>/assets/device_skin.png
     COMMENT "Copying apps and resources"
 )
-if(NOT EMU_SKIP_APPLAUNCH)
+if(TARGET APPLaunch)
     add_custom_command(TARGET cardputer-emu POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:APPLaunch> $<TARGET_FILE_DIR:cardputer-emu>/apps/
         COMMENT "Copying APPLaunch"

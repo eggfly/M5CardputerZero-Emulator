@@ -8,23 +8,20 @@ on:
   workflow_dispatch:
 
 jobs:
-  # ── macOS (arm64 + x86_64) ──────────────────────────────────
+  # ── macOS ───────────────────────────────────────────────────
   macos:
     runs-on: macos-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-
     - name: Install dependencies
       run: brew install sdl2 sdl2_image freetype pkg-config
-
     - name: Build
       run: |
         mkdir build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j$(sysctl -n hw.ncpu)
-
     - name: Package
       run: |
         mkdir -p dist/M5CardputerZero-Emulator
@@ -33,13 +30,12 @@ jobs:
         cp -r build/assets dist/M5CardputerZero-Emulator/
         cp -r build/share dist/M5CardputerZero-Emulator/
         cd dist && tar czf ../M5CardputerZero-Emulator-macOS.tar.gz M5CardputerZero-Emulator
-
     - uses: actions/upload-artifact@v4
       with:
         name: emulator-macos
         path: M5CardputerZero-Emulator-macOS.tar.gz
 
-  # ── Windows (MinGW-w64 — MSVC can't compile APPLaunch's GCC extensions) ──
+  # ── Windows (MinGW-w64) ─────────────────────────────────────
   windows:
     runs-on: windows-latest
     defaults:
@@ -58,17 +54,14 @@ jobs:
           mingw-w64-x86_64-winpthreads-git
           make
           git
-
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-
     - name: Build
       run: |
         mkdir build && cd build
         cmake .. -G "MSYS Makefiles" -DCMAKE_BUILD_TYPE=Release -DEMU_SKIP_APPLAUNCH=ON
         make -j$(nproc)
-
     - name: Package
       run: |
         mkdir -p dist/M5CardputerZero-Emulator
@@ -76,36 +69,31 @@ jobs:
         cp -r build/apps dist/M5CardputerZero-Emulator/ 2>/dev/null || true
         cp -r build/assets dist/M5CardputerZero-Emulator/ 2>/dev/null || true
         cp -r build/share dist/M5CardputerZero-Emulator/ 2>/dev/null || true
-        # Copy MinGW runtime DLLs
         for dll in SDL2.dll SDL2_image.dll libfreetype-6.dll libpng16-16.dll zlib1.dll libgcc_s_seh-1.dll libstdc++-6.dll libwinpthread-1.dll; do
           cp /mingw64/bin/$dll dist/M5CardputerZero-Emulator/ 2>/dev/null || true
         done
         cd dist && tar czf ../M5CardputerZero-Emulator-Windows.tar.gz M5CardputerZero-Emulator
-
     - uses: actions/upload-artifact@v4
       with:
         name: emulator-windows
         path: M5CardputerZero-Emulator-Windows.tar.gz
 
-  # ── Linux (Ubuntu) ──────────────────────────────────────────
+  # ── Linux ───────────────────────────────────────────────────
   linux:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-
     - name: Install dependencies
       run: |
         sudo apt-get update
         sudo apt-get install -y libsdl2-dev libsdl2-image-dev libfreetype-dev libinput-dev libxkbcommon-dev pkg-config
-
     - name: Build
       run: |
         mkdir build && cd build
         cmake .. -DCMAKE_BUILD_TYPE=Release
         make -j$(nproc)
-
     - name: Package
       run: |
         mkdir -p dist/M5CardputerZero-Emulator
@@ -114,7 +102,6 @@ jobs:
         cp -r build/assets dist/M5CardputerZero-Emulator/
         cp -r build/share dist/M5CardputerZero-Emulator/
         cd dist && tar czf ../M5CardputerZero-Emulator-Linux.tar.gz M5CardputerZero-Emulator
-
     - uses: actions/upload-artifact@v4
       with:
         name: emulator-linux
@@ -127,18 +114,15 @@ jobs:
     - uses: actions/checkout@v4
       with:
         submodules: recursive
-
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v14
       with:
         version: 3.1.73
-
     - name: Build
       run: |
         mkdir build-web && cd build-web
         emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
         emmake make -j$(nproc)
-
     - name: Package
       run: |
         mkdir -p dist-web
@@ -147,8 +131,50 @@ jobs:
         cp build-web/index.wasm dist-web/
         cp build-web/index.data dist-web/
         cd dist-web && zip -r ../M5CardputerZero-Emulator-Web.zip .
-
     - uses: actions/upload-artifact@v4
       with:
         name: emulator-web
         path: M5CardputerZero-Emulator-Web.zip
+
+  # ── Pre-release (runs after all 4 builds succeed) ───────────
+  release:
+    needs: [macos, windows, linux, web]
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/download-artifact@v4
+      with:
+        path: artifacts
+
+    - name: Create pre-release
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        TAG="dev-$(date -u +%Y%m%d-%H%M%S)-$(echo $GITHUB_SHA | head -c 7)"
+        echo "Tag: $TAG"
+
+        # Delete previous dev release if exists
+        gh release delete dev-latest --yes 2>/dev/null || true
+        git push origin :refs/tags/dev-latest 2>/dev/null || true
+
+        # Create new pre-release
+        gh release create "$TAG" \
+          --title "Dev Build $(date -u +%Y-%m-%d) (${GITHUB_SHA:0:7})" \
+          --notes "Automated pre-release from commit ${GITHUB_SHA:0:7}
+
+        **Downloads:**
+        - macOS (arm64): \`M5CardputerZero-Emulator-macOS.tar.gz\`
+        - Linux (x86_64): \`M5CardputerZero-Emulator-Linux.tar.gz\`
+        - Windows (x64, MinGW): \`M5CardputerZero-Emulator-Windows.tar.gz\`
+        - Web (WASM): \`M5CardputerZero-Emulator-Web.zip\`
+
+        _Windows build includes UserDemo only (APPLaunch requires Unix APIs)._" \
+          --prerelease \
+          artifacts/emulator-macos/M5CardputerZero-Emulator-macOS.tar.gz \
+          artifacts/emulator-linux/M5CardputerZero-Emulator-Linux.tar.gz \
+          artifacts/emulator-windows/M5CardputerZero-Emulator-Windows.tar.gz \
+          artifacts/emulator-web/M5CardputerZero-Emulator-Web.zip

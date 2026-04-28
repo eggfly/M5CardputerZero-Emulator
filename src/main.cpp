@@ -232,6 +232,10 @@ static void render()
 
 typedef void (*ui_init_fn)(void);
 
+#ifdef EMU_STATIC_APP
+extern "C" void ui_init(void);
+#endif
+
 // Set working directory to the exe's directory so relative paths work
 static void set_exe_dir()
 {
@@ -314,7 +318,6 @@ int main(int argc, char *argv[])
 
 #ifdef EMU_STATIC_APP
     // Windows: app is statically linked
-    extern "C" void ui_init(void);
     {
         lv_indev_t *kb = lv_indev_create();
         lv_indev_set_type(kb, LV_INDEV_TYPE_KEYPAD);
@@ -339,9 +342,9 @@ int main(int argc, char *argv[])
         printf("[EMU] Built-in keyboard driver\n");
     }
 
-    auto init = (ui_init_fn)emu_dlsym(app, "ui_init");
-    if (!init) { fprintf(stderr, "[EMU] ui_init missing\n"); return 1; }
-    init();
+    ui_init_fn app_init = (ui_init_fn)emu_dlsym(app, "ui_init");
+    if (!app_init) { fprintf(stderr, "[EMU] ui_init missing\n"); return 1; }
+    app_init();
 #endif
     printf("[EMU] Running.\n");
 
@@ -371,7 +374,11 @@ int main(int argc, char *argv[])
                     if (btn == 1) {
                         printf("[EMU] POWER — resetting\n");
                         memset(g_lcd_buf, 0, LCD_W * LCD_H * sizeof(uint32_t));
-                        init();
+#ifdef EMU_STATIC_APP
+                        ui_init();
+#else
+                        app_init();
+#endif
                     }
                     g_side_pr = -1;
                 } else if (side >= 0) {

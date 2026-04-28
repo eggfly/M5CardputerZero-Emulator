@@ -126,16 +126,30 @@ jobs:
         emmake make -j$(nproc)
     - name: Package
       run: |
+        # Standalone emulator
         mkdir -p dist-web
         cp build-web/index.html dist-web/
         cp build-web/index.js dist-web/
         cp build-web/index.wasm dist-web/
         cp build-web/index.data dist-web/
         cd dist-web && zip -r ../M5CardputerZero-Emulator-Web.zip .
+        cd ..
+        # Playground (embeds emulator in iframe)
+        mkdir -p dist-playground/emulator
+        cp web-playground/index.html dist-playground/
+        cp build-web/index.html dist-playground/emulator/
+        cp build-web/index.js dist-playground/emulator/
+        cp build-web/index.wasm dist-playground/emulator/
+        cp build-web/index.data dist-playground/emulator/
+        cd dist-playground && zip -r ../M5CardputerZero-Playground.zip .
     - uses: actions/upload-artifact@v4
       with:
         name: emulator-web
         path: M5CardputerZero-Emulator-Web.zip
+    - uses: actions/upload-artifact@v4
+      with:
+        name: playground
+        path: M5CardputerZero-Playground.zip
 
   # ── Pre-release (runs after all 4 builds succeed) ───────────
   release:
@@ -173,9 +187,12 @@ jobs:
         - Windows (x64, MinGW): \`M5CardputerZero-Emulator-Windows.tar.gz\`
         - Web (WASM): \`M5CardputerZero-Emulator-Web.zip\`
 
+        - **Playground** (hosted): \`M5CardputerZero-Playground.zip\` — unzip and open index.html
+
         _Windows build includes UserDemo only (APPLaunch requires Unix APIs)._" \
           --prerelease \
           artifacts/emulator-macos/M5CardputerZero-Emulator-macOS.tar.gz \
           artifacts/emulator-linux/M5CardputerZero-Emulator-Linux.tar.gz \
           artifacts/emulator-windows/M5CardputerZero-Emulator-Windows.tar.gz \
-          artifacts/emulator-web/M5CardputerZero-Emulator-Web.zip
+          artifacts/emulator-web/M5CardputerZero-Emulator-Web.zip \
+          artifacts/playground/M5CardputerZero-Playground.zip

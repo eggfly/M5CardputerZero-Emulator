@@ -39,13 +39,15 @@ static KeyRect g_keys[4][11] = {
      {1054,752,71,41,SDLK_m},{1166,752,70,41,SDLK_SPACE}},
 };
 
-// ── Side buttons (ESC/HOME left, TALK/NEXT right) ───────────────
-static constexpr int NUM_SIDE_KEYS = 4;
+// ── Side buttons + POWER ────────────────────────────────────────
+static constexpr int SIDE_POWER = 4; // index of POWER in g_side_keys
+static constexpr int NUM_SIDE_KEYS = 5;
 static KeyRect g_side_keys[NUM_SIDE_KEYS] = {
-    {49,  380, 70, 40, SDLK_ESCAPE},  // ESC (left)
-    {158, 380, 70, 40, SDLK_HOME},    // HOME (left)
-    {1058,380, 70, 40, SDLK_F3},      // TALK (right) — mapped to F3
-    {1166,380, 70, 40, SDLK_TAB},     // NEXT/tab (right)
+    {49,  365, 75, 45, SDLK_ESCAPE},  // ESC (left)
+    {158, 365, 75, 45, SDLK_HOME},    // HOME (left)
+    {1058,365, 75, 45, SDLK_F3},      // TALK (right)
+    {1166,365, 75, 45, SDLK_TAB},     // NEXT/tab (right)
+    {1050, 55, 90, 50, SDLK_POWER},   // POWER (right top, red switch)
 };
 
 // ── Modifier key indices ────────────────────────────────────────
@@ -291,7 +293,12 @@ int main(int argc, char *argv[])
             if (ev.type == SDL_MOUSEBUTTONDOWN) {
                 int r, c;
                 int side = hit_side_key(ev.button.x, ev.button.y);
-                if (side >= 0) {
+                if (side == SIDE_POWER) {
+                    g_side_pr = side;
+                    printf("[EMU] POWER pressed — resetting app\n");
+                    memset(g_lcd_buf, 0, LCD_W * LCD_H * sizeof(uint32_t));
+                    init();
+                } else if (side >= 0) {
                     g_side_pr = side;
                     inject_sdl_key(g_side_keys[side].key, true);
                 } else if (hit_key(ev.button.x, ev.button.y, &r, &c)) {

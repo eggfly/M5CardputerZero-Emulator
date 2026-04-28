@@ -123,8 +123,8 @@ add_library(APPLaunch SHARED
     ${APPLAUNCH_KBD}
 )
 if(WIN32)
-    # MinGW has pthreads but not sys/queue.h
-    target_include_directories(APPLaunch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/compat_queue)
+    # MinGW needs: sys/queue.h, sys/wait.h stubs (no fork), unistd extras
+    target_include_directories(APPLaunch BEFORE PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src/compat)
 endif()
 target_include_directories(APPLaunch PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}

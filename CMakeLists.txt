@@ -134,7 +134,14 @@ target_include_directories(APPLaunch PRIVATE
     ${APPLAUNCH}
 )
 if(MSVC)
-    target_compile_options(APPLaunch PRIVATE /FI${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h)
+    target_compile_options(APPLaunch PRIVATE
+        /FI${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h
+        /FI${CMAKE_CURRENT_SOURCE_DIR}/src/compat/win32_stubs.h)
+elseif(WIN32)
+    target_compile_options(APPLaunch PRIVATE
+        -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h
+        -include ${CMAKE_CURRENT_SOURCE_DIR}/src/compat/win32_stubs.h
+        -Wno-c++11-narrowing)
 else()
     target_compile_options(APPLaunch PRIVATE
         -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h

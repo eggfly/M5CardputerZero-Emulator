@@ -47,7 +47,7 @@ static KeyRect g_side_keys[NUM_SIDE_KEYS] = {
     {158, 365, 75, 45, SDLK_HOME},    // HOME (left)
     {1058,365, 75, 45, SDLK_F3},      // TALK (right)
     {1166,365, 75, 45, SDLK_TAB},     // NEXT/tab (right)
-    {1050, 55, 90, 50, SDLK_POWER},   // POWER (right top, red switch)
+    {1080, 40, 100, 60, SDLK_POWER},  // POWER (right top, red ON switch)
 };
 
 // ── Modifier key indices ────────────────────────────────────────
@@ -295,9 +295,25 @@ int main(int argc, char *argv[])
                 int side = hit_side_key(ev.button.x, ev.button.y);
                 if (side == SIDE_POWER) {
                     g_side_pr = side;
-                    printf("[EMU] POWER pressed — resetting app\n");
-                    memset(g_lcd_buf, 0, LCD_W * LCD_H * sizeof(uint32_t));
-                    init();
+                    const SDL_MessageBoxButtonData btns[] = {
+                        {SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT, 0, "Cancel"},
+                        {SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 1, "Reset"},
+                    };
+                    SDL_MessageBoxData mbd = {};
+                    mbd.flags = SDL_MESSAGEBOX_WARNING;
+                    mbd.window = g_win;
+                    mbd.title = "Power";
+                    mbd.message = "Reset the emulator?";
+                    mbd.numbuttons = 2;
+                    mbd.buttons = btns;
+                    int btn = 0;
+                    SDL_ShowMessageBox(&mbd, &btn);
+                    if (btn == 1) {
+                        printf("[EMU] POWER — resetting\n");
+                        memset(g_lcd_buf, 0, LCD_W * LCD_H * sizeof(uint32_t));
+                        init();
+                    }
+                    g_side_pr = -1;
                 } else if (side >= 0) {
                     g_side_pr = side;
                     inject_sdl_key(g_side_keys[side].key, true);

@@ -49,7 +49,7 @@ static KeyRect g_side_keys[NUM_SIDE_KEYS] = {
     {158, 365, 75, 45, SDLK_HOME},
     {1058,365, 75, 45, SDLK_F3},
     {1166,365, 75, 45, SDLK_TAB},
-    {1050, 55, 90, 50, SDLK_POWER},
+    {1080, 40, 100, 60, SDLK_POWER},
 };
 static int g_side_pr = -1;
 
@@ -172,9 +172,13 @@ static void main_loop() {
             int side=hit_side(ev.button.x,ev.button.y);
             if(side==SIDE_POWER){
                 g_side_pr=side;
-                printf("[EMU] POWER — reset\n");
-                memset(g_lcd_buf,0,LCD_W*LCD_H*sizeof(uint32_t));
-                ui_init();
+                int confirmed = EM_ASM_INT({ return confirm("Reset the emulator?") ? 1 : 0; });
+                if(confirmed){
+                    printf("[EMU] POWER — reset\n");
+                    memset(g_lcd_buf,0,LCD_W*LCD_H*sizeof(uint32_t));
+                    ui_init();
+                }
+                g_side_pr=-1;
             } else if(side>=0){g_side_pr=side;inject_sdl_key(g_side_keys[side].key,true);}
             else{int r,c;
             if(hit_key(ev.button.x,ev.button.y,&r,&c)){

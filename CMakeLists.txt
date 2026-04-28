@@ -112,13 +112,15 @@ if(NOT EMSCRIPTEN)
 
 option(EMU_SKIP_APPLAUNCH "Skip APPLaunch (Unix-only deps)" OFF)
 
-# ---------------------------------------------------------------------------
-# APP: APPLaunch.dylib (skip on Windows due to fork/pty/ioctl deps)
-# ---------------------------------------------------------------------------
-if(NOT EMU_SKIP_APPLAUNCH)
+# APPLaunch source files (used by both shared lib and Windows static link)
 file(GLOB_RECURSE APPLAUNCH_UI_C   ${APPLAUNCH}/ui/*.c)
 file(GLOB_RECURSE APPLAUNCH_UI_CPP ${APPLAUNCH}/ui/*.cpp)
 file(GLOB         APPLAUNCH_KBD    ${APPLAUNCH}/src/keyboard_input.c)
+
+# ---------------------------------------------------------------------------
+# APP: APPLaunch shared lib (Unix only — Windows statically links into exe)
+# ---------------------------------------------------------------------------
+if(NOT EMU_SKIP_APPLAUNCH AND NOT WIN32)
 
 add_library(APPLaunch SHARED
     ${APPLAUNCH_UI_C}

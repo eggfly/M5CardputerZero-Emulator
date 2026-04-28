@@ -115,9 +115,26 @@ static float g_dpi_scale = 1.0f;  // renderer_pixels / window_points
 
 static int g_side_pr = -1;  // pressed side key index
 
+// Convert mouse window coords → skin coords (1280x840)
+static void mouse_to_skin(int mx, int my, int *sx, int *sy)
+{
+    int rw, rh;
+    SDL_GetRendererOutputSize(g_ren, &rw, &rh);
+    *sx = mx * SKIN_W / (rw > 0 ? rw : SKIN_W);
+    *sy = my * SKIN_H / (rh > 0 ? rh : SKIN_H);
+    // On Retina: rw=1280, mouse is in 640 logical → sx = mx*1280/1280 wrong
+    // Actually SDL mouse coords are always in window logical points
+    // We need: sx = mx * SKIN_W / window_w
+    int ww, wh;
+    SDL_GetWindowSize(g_win, &ww, &wh);
+    *sx = mx * SKIN_W / (ww > 0 ? ww : 1);
+    *sy = my * SKIN_H / (wh > 0 ? wh : 1);
+}
+
 static bool hit_key(int mx, int my, int *r, int *c)
 {
-    int sx = (int)(mx * g_dpi_scale), sy = (int)(my * g_dpi_scale);
+    int sx, sy;
+    mouse_to_skin(mx, my, &sx, &sy);
     for (int i = 0; i < 4; i++)
         for (int j = 0; j < 11; j++) {
             auto &k = g_keys[i][j];
@@ -129,7 +146,8 @@ static bool hit_key(int mx, int my, int *r, int *c)
 
 static int hit_side_key(int mx, int my)
 {
-    int sx = (int)(mx * g_dpi_scale), sy = (int)(my * g_dpi_scale);
+    int sx, sy;
+    mouse_to_skin(mx, my, &sx, &sy);
     for (int i = 0; i < NUM_SIDE_KEYS; i++) {
         auto &k = g_side_keys[i];
         if (sx >= k.x && sx < k.x+k.w && sy >= k.y && sy < k.y+k.h)
@@ -317,10 +335,13 @@ int main(int argc, char *argv[])
     lv_display_set_color_format(disp, LV_COLOR_FORMAT_RGB565);
 
 #ifdef EMU_STATIC_APP
-    // Windows: app is statically linked
+    // Windows: app is statically linked, simple keypad indev
     {
         lv_indev_t *kb = lv_indev_create();
         lv_indev_set_type(kb, LV_INDEV_TYPE_KEYPAD);
+        lv_indev_set_read_cb(kb, [](lv_indev_t*, lv_indev_data_t *d) {
+            d->state = LV_INDEV_STATE_RELEASED;
+        });
         printf("[EMU] Built-in keyboard driver\n");
     }
     printf("[EMU] Loaded: %s\n", app_path);

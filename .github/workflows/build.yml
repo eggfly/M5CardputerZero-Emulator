@@ -1,0 +1,142 @@
+name: Build Emulator
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  # ── macOS (arm64 + x86_64) ──────────────────────────────────
+  macos:
+    runs-on: macos-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: brew install sdl2 sdl2_image freetype pkg-config
+
+    - name: Build
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(sysctl -n hw.ncpu)
+
+    - name: Package
+      run: |
+        mkdir -p dist/M5CardputerZero-Emulator
+        cp build/cardputer-emu dist/M5CardputerZero-Emulator/
+        cp -r build/apps dist/M5CardputerZero-Emulator/
+        cp -r build/assets dist/M5CardputerZero-Emulator/
+        cp -r build/share dist/M5CardputerZero-Emulator/
+        cd dist && tar czf ../M5CardputerZero-Emulator-macOS.tar.gz M5CardputerZero-Emulator
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: emulator-macos
+        path: M5CardputerZero-Emulator-macOS.tar.gz
+
+  # ── Windows (MSVC + vcpkg) ──────────────────────────────────
+  windows:
+    runs-on: windows-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install vcpkg packages
+      run: |
+        vcpkg install sdl2:x64-windows sdl2-image:x64-windows freetype:x64-windows
+
+    - name: Build
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake"
+        cmake --build . --config Release -j $env:NUMBER_OF_PROCESSORS
+
+    - name: Package
+      run: |
+        mkdir dist\M5CardputerZero-Emulator
+        copy build\Release\cardputer-emu.exe dist\M5CardputerZero-Emulator\
+        xcopy /E /I build\apps dist\M5CardputerZero-Emulator\apps
+        xcopy /E /I build\assets dist\M5CardputerZero-Emulator\assets
+        xcopy /E /I build\share dist\M5CardputerZero-Emulator\share
+        # Copy runtime DLLs
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\SDL2.dll dist\M5CardputerZero-Emulator\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\SDL2_image.dll dist\M5CardputerZero-Emulator\
+        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\freetype.dll dist\M5CardputerZero-Emulator\
+        Compress-Archive -Path dist\M5CardputerZero-Emulator -DestinationPath M5CardputerZero-Emulator-Windows.zip
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: emulator-windows
+        path: M5CardputerZero-Emulator-Windows.zip
+
+  # ── Linux (Ubuntu) ──────────────────────────────────────────
+  linux:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libsdl2-dev libsdl2-image-dev libfreetype-dev pkg-config
+
+    - name: Build
+      run: |
+        mkdir build && cd build
+        cmake .. -DCMAKE_BUILD_TYPE=Release
+        make -j$(nproc)
+
+    - name: Package
+      run: |
+        mkdir -p dist/M5CardputerZero-Emulator
+        cp build/cardputer-emu dist/M5CardputerZero-Emulator/
+        cp -r build/apps dist/M5CardputerZero-Emulator/
+        cp -r build/assets dist/M5CardputerZero-Emulator/
+        cp -r build/share dist/M5CardputerZero-Emulator/
+        cd dist && tar czf ../M5CardputerZero-Emulator-Linux.tar.gz M5CardputerZero-Emulator
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: emulator-linux
+        path: M5CardputerZero-Emulator-Linux.tar.gz
+
+  # ── Web (Emscripten/WASM) ───────────────────────────────────
+  web:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+
+    - name: Setup Emscripten
+      uses: mymindstorm/setup-emsdk@v14
+      with:
+        version: 3.1.61
+
+    - name: Build
+      run: |
+        mkdir build-web && cd build-web
+        emcmake cmake .. -DCMAKE_BUILD_TYPE=Release
+        emmake make -j$(nproc)
+
+    - name: Package
+      run: |
+        mkdir -p dist-web
+        cp build-web/index.html dist-web/
+        cp build-web/index.js dist-web/
+        cp build-web/index.wasm dist-web/
+        cp build-web/index.data dist-web/
+        cd dist-web && zip -r ../M5CardputerZero-Emulator-Web.zip .
+
+    - uses: actions/upload-artifact@v4
+      with:
+        name: emulator-web
+        path: M5CardputerZero-Emulator-Web.zip

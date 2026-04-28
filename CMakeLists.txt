@@ -110,9 +110,12 @@ endmacro()
 # ===========================================================================
 if(NOT EMSCRIPTEN)
 
+option(EMU_SKIP_APPLAUNCH "Skip APPLaunch (Unix-only deps)" OFF)
+
 # ---------------------------------------------------------------------------
-# APP: APPLaunch.dylib
+# APP: APPLaunch.dylib (skip on Windows due to fork/pty/ioctl deps)
 # ---------------------------------------------------------------------------
+if(NOT EMU_SKIP_APPLAUNCH)
 file(GLOB_RECURSE APPLAUNCH_UI_C   ${APPLAUNCH}/ui/*.c)
 file(GLOB_RECURSE APPLAUNCH_UI_CPP ${APPLAUNCH}/ui/*.cpp)
 file(GLOB         APPLAUNCH_KBD    ${APPLAUNCH}/src/keyboard_input.c)
@@ -151,6 +154,7 @@ elseif(WIN32)
 else()
     target_link_options(APPLaunch PRIVATE -Wl,--unresolved-symbols=ignore-all)
 endif()
+endif() # NOT EMU_SKIP_APPLAUNCH
 
 # ---------------------------------------------------------------------------
 # APP: UserDemo.dylib
@@ -263,9 +267,6 @@ endif()
 add_custom_command(TARGET cardputer-emu POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:cardputer-emu>/apps
     COMMAND ${CMAKE_COMMAND} -E copy
-        $<TARGET_FILE:APPLaunch>
-        $<TARGET_FILE_DIR:cardputer-emu>/apps/
-    COMMAND ${CMAKE_COMMAND} -E copy
         $<TARGET_FILE:UserDemo>
         $<TARGET_FILE_DIR:cardputer-emu>/apps/
     COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:cardputer-emu>/share/images
@@ -278,6 +279,12 @@ add_custom_command(TARGET cardputer-emu POST_BUILD
         $<TARGET_FILE_DIR:cardputer-emu>/assets/device_skin.png
     COMMENT "Copying apps and resources"
 )
+if(NOT EMU_SKIP_APPLAUNCH)
+    add_custom_command(TARGET cardputer-emu POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy $<TARGET_FILE:APPLaunch> $<TARGET_FILE_DIR:cardputer-emu>/apps/
+        COMMENT "Copying APPLaunch"
+    )
+endif()
 
 endif() # NOT EMSCRIPTEN — end native targets
 

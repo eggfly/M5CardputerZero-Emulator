@@ -228,9 +228,42 @@ static void render()
 
 typedef void (*ui_init_fn)(void);
 
+// Set working directory to the exe's directory so relative paths work
+static void set_exe_dir()
+{
+#ifdef _WIN32
+    char path[MAX_PATH];
+    GetModuleFileNameA(NULL, path, MAX_PATH);
+    char *last = strrchr(path, '\\');
+    if (last) { *last = '\0'; SetCurrentDirectoryA(path); }
+#elif defined(__APPLE__)
+    // macOS: SDL handles this, but just in case
+    char path[1024];
+    uint32_t size = sizeof(path);
+    if (_NSGetExecutablePath(path, &size) == 0) {
+        char *last = strrchr(path, '/');
+        if (last) { *last = '\0'; chdir(path); }
+    }
+#endif
+    // Linux: usually launched from the right dir, or use /proc/self/exe
+}
+
+#ifdef __APPLE__
+#include <mach-o/dyld.h>
+#endif
+
 int main(int argc, char *argv[])
 {
+    set_exe_dir();
+
+    // Platform-specific default app path
+#ifdef _WIN32
+    const char *app_path = "apps/libUserDemo.dll";
+#elif defined(__APPLE__)
     const char *app_path = "apps/libAPPLaunch.dylib";
+#else
+    const char *app_path = "apps/libAPPLaunch.so";
+#endif
     if (argc > 1) app_path = argv[1];
 
     printf("========================================\n");

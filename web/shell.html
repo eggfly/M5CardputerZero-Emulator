@@ -25,6 +25,14 @@
 <body>
 <h1>M5CardputerZero Emulator</h1>
 <canvas id="canvas" oncontextmenu="event.preventDefault()" tabindex="0"></canvas>
+<script>
+  // Prevent browser from stealing arrow/space/tab keys from the emulator
+  window.addEventListener('keydown', function(e) {
+    if ([37,38,39,40,32,9,8,27].indexOf(e.keyCode) !== -1) {
+      e.preventDefault();
+    }
+  }, {passive: false});
+</script>
 <div id="status"><span class="spinner"></span> Loading...</div>
 <script>
   var Module = {

@@ -6,120 +6,105 @@
 <title>M5CardputerZero — Online Playground</title>
 <style>
   :root {
-    --m5-blue: #1A73E8;
-    --m5-blue-light: #4A9AF5;
-    --m5-green: #07C160;
-    --m5-bg: #1e1e1e;
-    --m5-bg-light: #2b2b2b;
-    --m5-sidebar: #262626;
-    --m5-border: #3a3a3a;
-    --m5-text: #ccc;
-    --m5-text-dim: #888;
+    --m5-blue: #1A73E8; --m5-blue-light: #4A9AF5; --m5-green: #07C160;
+    --m5-bg: #1e1e1e; --m5-bg-light: #2b2b2b; --m5-sidebar: #262626;
+    --m5-border: #3a3a3a; --m5-text: #ccc; --m5-text-dim: #888;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
     background: var(--m5-bg); color: var(--m5-text);
-    height: 100vh; display: flex; flex-direction: column;
+    height: 100vh; display: flex; flex-direction: column; overflow: hidden;
   }
 
   /* Header */
   header {
     display: flex; align-items: center; gap: 12px;
-    padding: 10px 20px;
-    background: var(--m5-sidebar);
-    border-bottom: 1px solid var(--m5-border);
+    padding: 8px 16px; background: var(--m5-sidebar);
+    border-bottom: 1px solid var(--m5-border); flex-shrink: 0;
   }
-  header .logo {
-    width: 36px; height: 36px; border-radius: 8px;
+  .logo {
+    width: 32px; height: 32px; border-radius: 6px;
     background: var(--m5-blue); color: #fff;
     display: flex; align-items: center; justify-content: center;
-    font-weight: 700; font-size: 14px;
+    font-weight: 700; font-size: 12px;
   }
-  header h1 { font-size: 16px; font-weight: 600; }
-  header .subtitle { font-size: 12px; color: var(--m5-text-dim); }
-  header .links { margin-left: auto; display: flex; gap: 12px; }
-  header .links a {
-    font-size: 12px; color: var(--m5-blue-light); text-decoration: none;
-  }
-  header .links a:hover { text-decoration: underline; }
+  header h1 { font-size: 14px; font-weight: 600; }
+  header .subtitle { font-size: 11px; color: var(--m5-text-dim); }
+  .header-right { margin-left: auto; display: flex; align-items: center; gap: 12px; }
+  .header-right a { font-size: 11px; color: var(--m5-blue-light); text-decoration: none; }
+  .header-right a:hover { text-decoration: underline; }
 
-  /* Tabs */
-  .tabs {
-    display: flex; gap: 0;
-    background: var(--m5-bg-light);
-    border-bottom: 1px solid var(--m5-border);
+  /* Toolbar */
+  .toolbar {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 16px; background: var(--m5-bg-light);
+    border-bottom: 1px solid var(--m5-border); flex-shrink: 0;
   }
-  .tab-btn {
-    padding: 10px 20px; font-size: 13px; font-weight: 500;
-    background: none; border: none; color: var(--m5-text-dim);
-    cursor: pointer; border-bottom: 2px solid transparent;
-    transition: all 0.15s;
+  .m5-select {
+    background: #333; border: 1px solid var(--m5-border); border-radius: 4px;
+    padding: 5px 10px; font-size: 12px; color: #ccc; outline: none;
   }
-  .tab-btn:hover { color: var(--m5-text); }
-  .tab-btn.active { color: var(--m5-blue-light); border-bottom-color: var(--m5-blue); }
+  .m5-select:focus { border-color: var(--m5-blue); }
+  .m5-btn {
+    padding: 5px 14px; border-radius: 4px; font-size: 12px; font-weight: 500;
+    border: none; cursor: pointer; transition: opacity 0.15s; white-space: nowrap;
+  }
+  .m5-btn:hover { opacity: 0.85; }
+  .m5-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+  .m5-btn-blue { background: var(--m5-blue); color: #fff; }
+  .m5-btn-green { background: var(--m5-green); color: #fff; }
+  .toolbar-sep { width: 1px; height: 20px; background: var(--m5-border); }
+  .toolbar label { font-size: 11px; color: var(--m5-text-dim); }
 
-  /* Main content */
-  .content { flex: 1; display: flex; overflow: hidden; }
-  .panel { flex: 1; display: none; flex-direction: column; }
-  .panel.active { display: flex; }
+  /* Main split */
+  .main { flex: 1; display: flex; overflow: hidden; }
 
-  /* Emulator panel */
-  .emu-panel { align-items: center; justify-content: center; padding: 20px; gap: 12px; }
-  .emu-panel iframe {
-    border: none; border-radius: 8px; max-width: 100%;
-    box-shadow: 0 4px 24px rgba(0,0,0,0.4);
+  /* Editor pane */
+  .editor-pane {
+    flex: 1; display: flex; flex-direction: column;
+    border-right: 1px solid var(--m5-border); min-width: 0;
   }
-  .emu-hint { font-size: 12px; color: var(--m5-text-dim); text-align: center; }
+  .file-tabs {
+    display: flex; background: var(--m5-sidebar);
+    border-bottom: 1px solid var(--m5-border); overflow-x: auto; flex-shrink: 0;
+  }
+  .file-tab {
+    padding: 6px 14px; font-size: 11px; color: var(--m5-text-dim);
+    background: none; border: none; cursor: pointer;
+    border-bottom: 2px solid transparent; white-space: nowrap;
+  }
+  .file-tab:hover { color: var(--m5-text); }
+  .file-tab.active { color: #fff; border-bottom-color: var(--m5-blue); background: var(--m5-bg); }
+  #editor-container { flex: 1; min-height: 0; }
 
-  /* Examples panel */
-  .examples-panel { padding: 24px; overflow-y: auto; }
-  .examples-grid {
-    display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: 16px; max-width: 900px; margin: 0 auto;
+  /* Emulator pane */
+  .emu-pane {
+    width: 420px; min-width: 320px; display: flex; flex-direction: column;
+    align-items: center; padding: 12px; gap: 8px;
+    background: #161622; overflow-y: auto;
   }
-  .example-card {
-    background: var(--m5-bg-light); border: 1px solid var(--m5-border);
-    border-radius: 8px; padding: 16px; cursor: pointer;
-    transition: border-color 0.15s, transform 0.1s;
+  .emu-pane iframe {
+    border: none; border-radius: 8px; width: 100%; max-width: 400px;
+    aspect-ratio: 1280/840; box-shadow: 0 4px 20px rgba(0,0,0,0.5);
   }
-  .example-card:hover { border-color: var(--m5-blue); transform: translateY(-2px); }
-  .example-card h3 { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-  .example-card p { font-size: 12px; color: var(--m5-text-dim); line-height: 1.5; }
-  .example-card .tag {
-    display: inline-block; font-size: 10px; padding: 2px 8px;
-    background: rgba(26,115,232,0.15); color: var(--m5-blue-light);
-    border-radius: 10px; margin-top: 8px;
-  }
+  .emu-hint { font-size: 10px; color: var(--m5-text-dim); text-align: center; line-height: 1.6; }
 
-  /* About panel */
-  .about-panel { padding: 24px; overflow-y: auto; }
-  .about-panel .specs {
-    max-width: 700px; margin: 0 auto;
-    background: var(--m5-bg-light); border-radius: 8px;
-    padding: 20px; border: 1px solid var(--m5-border);
+  /* Status bar */
+  .statusbar {
+    display: flex; align-items: center; gap: 12px;
+    padding: 4px 16px; background: var(--m5-sidebar);
+    border-top: 1px solid var(--m5-border); flex-shrink: 0;
+    font-size: 11px; color: var(--m5-text-dim);
   }
-  .about-panel h2 { font-size: 16px; margin-bottom: 16px; }
-  .about-panel table { width: 100%; font-size: 13px; border-collapse: collapse; }
-  .about-panel td { padding: 6px 8px; border-bottom: 1px solid var(--m5-border); }
-  .about-panel td:first-child { color: var(--m5-blue-light); font-weight: 500; width: 140px; }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; }
+  .status-dot.green { background: var(--m5-green); }
+  .status-dot.yellow { background: #f0ad4e; }
 
-  /* Docs panel */
-  .docs-panel { padding: 24px; overflow-y: auto; }
-  .docs-panel .doc-content {
-    max-width: 700px; margin: 0 auto; font-size: 13px; line-height: 1.8;
-  }
-  .docs-panel h2 { font-size: 16px; margin: 16px 0 8px; color: var(--m5-blue-light); }
-  .docs-panel code {
-    background: #333; padding: 2px 6px; border-radius: 3px; font-size: 12px;
-  }
-  .docs-panel pre {
-    background: #111; padding: 12px; border-radius: 6px; overflow-x: auto;
-    font-size: 12px; margin: 8px 0; border: 1px solid var(--m5-border);
-  }
-
-  @media (max-width: 700px) {
-    .emu-panel iframe { width: 100%; height: auto; aspect-ratio: 1280/840; }
+  @media (max-width: 800px) {
+    .main { flex-direction: column; }
+    .editor-pane { border-right: none; border-bottom: 1px solid var(--m5-border); }
+    .emu-pane { width: 100%; flex-direction: row; flex-wrap: wrap; }
   }
 </style>
 </head>
@@ -129,174 +114,338 @@
   <div class="logo">M5</div>
   <div>
     <h1>CardputerZero Playground</h1>
-    <div class="subtitle">Try the emulator in your browser — no install needed</div>
+    <div class="subtitle">Edit code & run in browser emulator</div>
   </div>
-  <div class="links">
+  <div class="header-right">
     <a href="https://github.com/eggfly/M5CardputerZero-Emulator" target="_blank">GitHub</a>
     <a href="https://github.com/eggfly/M5CardputerZero-Emulator/releases" target="_blank">Downloads</a>
+    <a href="https://docs.lvgl.io/" target="_blank">LVGL Docs</a>
   </div>
 </header>
 
-<div class="tabs">
-  <button class="tab-btn active" data-tab="emulator">Emulator</button>
-  <button class="tab-btn" data-tab="examples">Examples</button>
-  <button class="tab-btn" data-tab="about">Hardware Specs</button>
-  <button class="tab-btn" data-tab="docs">Getting Started</button>
+<div class="toolbar">
+  <label>Example:</label>
+  <select id="example-select" class="m5-select" onchange="loadExample(this.value)">
+    <option value="applaunch">APPLaunch (Launcher)</option>
+    <option value="userdemo">UserDemo (Status Bar)</option>
+    <option value="helloworld">Hello World</option>
+  </select>
+  <div class="toolbar-sep"></div>
+  <button class="m5-btn m5-btn-green" onclick="alert('Cloud compile coming soon!\n\nThis will use GitHub Actions to compile your code\nand run it in the emulator.')" title="Compile & run (coming soon)">
+    ▶ Build & Run
+  </button>
+  <button class="m5-btn m5-btn-blue" onclick="reloadEmulator()">↻ Reload Emulator</button>
+  <div class="toolbar-sep"></div>
+  <label style="color:var(--m5-green)">Keyboard: Z/C=left/right, Enter=select</label>
 </div>
 
-<div class="content">
-  <!-- Emulator Tab -->
-  <div class="panel emu-panel active" id="panel-emulator">
-    <iframe id="emu-frame" src="about:blank" width="640" height="420"
-      allow="cross-origin-isolated"></iframe>
+<div class="main">
+  <!-- Editor -->
+  <div class="editor-pane">
+    <div class="file-tabs" id="file-tabs"></div>
+    <div id="editor-container"></div>
+  </div>
+
+  <!-- Emulator -->
+  <div class="emu-pane">
+    <iframe id="emu-frame" src="about:blank" allow="cross-origin-isolated"></iframe>
     <div class="emu-hint">
-      Click the device keys or use your keyboard (Z/C = left/right, Enter = select)<br>
-      <button class="tab-btn" style="margin-top:8px; border:1px solid var(--m5-border); border-radius:4px;"
-        onclick="loadEmulator()">Reload Emulator</button>
-    </div>
-  </div>
-
-  <!-- Examples Tab -->
-  <div class="panel examples-panel" id="panel-examples">
-    <div class="examples-grid">
-      <div class="example-card" onclick="alert('Coming soon: load this example into the emulator')">
-        <h3>APPLaunch (Launcher)</h3>
-        <p>The default home screen with app carousel, icon navigation, and system status bar.</p>
-        <span class="tag">Built-in</span>
-      </div>
-      <div class="example-card" onclick="alert('Coming soon')">
-        <h3>Hello World</h3>
-        <p>Minimal LVGL app: display text on the 320x170 screen with a button.</p>
-        <span class="tag">Beginner</span>
-      </div>
-      <div class="example-card" onclick="alert('Coming soon')">
-        <h3>Terminal (CLI)</h3>
-        <p>VT100 terminal emulator with PTY — run bash inside the CardputerZero.</p>
-        <span class="tag">System</span>
-      </div>
-      <div class="example-card" onclick="alert('Coming soon')">
-        <h3>Music Player</h3>
-        <p>Audio playback UI with ES8389 codec control and volume slider.</p>
-        <span class="tag">Audio</span>
-      </div>
-      <div class="example-card" onclick="alert('Coming soon')">
-        <h3>Wi-Fi Scanner</h3>
-        <p>Scan and display nearby Wi-Fi networks with signal strength bars.</p>
-        <span class="tag">Network</span>
-      </div>
-      <div class="example-card" onclick="alert('Coming soon')">
-        <h3>Custom App Template</h3>
-        <p>Start from scratch: empty LVGL project with keyboard input handling.</p>
-        <span class="tag">Template</span>
-      </div>
-    </div>
-  </div>
-
-  <!-- Hardware Specs Tab -->
-  <div class="panel about-panel" id="panel-about">
-    <div class="specs">
-      <h2>M5CardputerZero Hardware Specifications</h2>
-      <table>
-        <tr><td>Processor</td><td>Raspberry Pi CM0, BCM2837, Quad-Core Cortex-A53 1GHz</td></tr>
-        <tr><td>Memory</td><td>512 MB LPDDR2 + microSD card slot</td></tr>
-        <tr><td>Display</td><td>1.9" LCD (ST7789v3) 320x170, HDMI 1080P 30fps</td></tr>
-        <tr><td>Input</td><td>46-key matrix keyboard (TCA8418 I2C)</td></tr>
-        <tr><td>Camera</td><td>Sony IMX219, 8MP (3280x2464), CSI 4-Lane</td></tr>
-        <tr><td>Audio</td><td>ES8389 codec, MEMS mic, 1W speaker, 3.5mm TRS</td></tr>
-        <tr><td>Sensors</td><td>BMI270 IMU, RX8130CE RTC</td></tr>
-        <tr><td>Wireless</td><td>Wi-Fi 802.11 b/g/n, Bluetooth 4.2/BLE</td></tr>
-        <tr><td>USB</td><td>Host/Slave switchable, 2x Type-C, 1x USB-A</td></tr>
-        <tr><td>Battery</td><td>3.7V / 1500mAh Li-Po, BQ27220 fuel gauge</td></tr>
-        <tr><td>Networking</td><td>10/100M Ethernet</td></tr>
-        <tr><td>Expansion</td><td>HY2.0-4P (I2C/UART), 2.54-14P bus</td></tr>
-        <tr><td>IR</td><td>Infrared TX & RX</td></tr>
-        <tr><td>Video Codec</td><td>H.264 decode/encode @ 1080P 30fps</td></tr>
-      </table>
-    </div>
-  </div>
-
-  <!-- Getting Started Tab -->
-  <div class="panel docs-panel" id="panel-docs">
-    <div class="doc-content">
-      <h2>Quick Start</h2>
-      <p>The emulator runs the real APPLaunch firmware in your browser via WebAssembly. No installation required.</p>
-
-      <h2>Keyboard Controls</h2>
-      <pre>
-Z / Left Arrow  — Switch app left
-C / Right Arrow — Switch app right
-Enter           — Open selected app
-Escape          — Back / Home
-Letters/Numbers — Type in apps (CLI, etc.)
-      </pre>
-
-      <h2>Desktop Emulator</h2>
-      <p>For full-featured development, download the native emulator:</p>
-      <pre>
-# macOS
-brew install sdl2 sdl2_image freetype
-git clone --recursive https://github.com/eggfly/M5CardputerZero-Emulator.git
-cd M5CardputerZero-Emulator && mkdir build && cd build
-cmake .. && make -j8
-./cardputer-emu
-      </pre>
-
-      <h2>Build Your Own App</h2>
-      <p>Apps are LVGL-based C/C++ projects compiled with the M5Stack Linux Libs SDK:</p>
-      <pre>
-git clone --recursive https://github.com/eggfly/M5CardputerZero-UserDemo.git
-cd projects/UserDemo
-scons -j$(nproc)    # SDL2 simulation mode (PC)
-./dist/M5CardputerZero-UserDemo
-      </pre>
-
-      <h2>App Architecture</h2>
-      <p>Each app exports <code>void ui_init(void)</code> and is loaded by the emulator as a dynamic library (<code>.dylib</code> / <code>.so</code> / <code>.dll</code>). In the web version, apps are statically linked into the WASM binary.</p>
-
-      <h2>Links</h2>
-      <p>
-        <a href="https://github.com/eggfly/M5CardputerZero-Emulator" style="color:var(--m5-blue-light)">Emulator Source</a> |
-        <a href="https://github.com/eggfly/M5CardputerZero-UserDemo" style="color:var(--m5-blue-light)">UserDemo SDK</a> |
-        <a href="https://github.com/m5stack/M5Stack_Linux_Libs" style="color:var(--m5-blue-light)">M5Stack Linux Libs</a> |
-        <a href="https://docs.lvgl.io/" style="color:var(--m5-blue-light)">LVGL Documentation</a>
-      </p>
+      Click keys on the device or use PC keyboard<br>
+      320×170 LCD | LVGL 9.5 | SDL2 → WebAssembly
     </div>
   </div>
 </div>
 
-<script>
-// Tab switching
-document.querySelectorAll('.tab-btn[data-tab]').forEach(btn => {
-  btn.addEventListener('click', () => {
-    document.querySelectorAll('.tab-btn[data-tab]').forEach(b => b.classList.remove('active'));
-    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
-    btn.classList.add('active');
-    document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
-  });
-});
+<div class="statusbar">
+  <span class="status-dot green"></span>
+  <span>Emulator running</span>
+  <span>|</span>
+  <span id="status-text">APPLaunch loaded</span>
+</div>
 
-// Load emulator WASM
-function loadEmulator() {
-  const frame = document.getElementById('emu-frame');
-  // Point to the WASM build output served alongside this page
-  frame.src = 'emulator/index.html';
+<!-- Monaco Editor from CDN -->
+<script src="https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs/loader.js"></script>
+<script>
+// ── Example source files ────────────────────────────────────
+const EXAMPLES = {
+  applaunch: {
+    files: {
+      'main.cpp': `// APPLaunch — M5CardputerZero Launcher
+// This is the default home screen with app carousel
+
+#include "lvgl/lvgl.h"
+#include "ui/ui.h"
+
+#if LV_USE_SDL
+static void lv_linux_disp_init(void) {
+    lv_sdl_window_create(320, 170);
+}
+static void lv_linux_indev_init(void) {
+    lv_sdl_mouse_create();
+    lv_sdl_keyboard_create();
+}
+#endif
+
+int main(void) {
+    lv_init();
+    lv_linux_disp_init();
+    lv_linux_indev_init();
+
+    // Initialize the launcher UI
+    ui_init();
+
+    // Main loop
+    while (1) {
+        lv_timer_handler();
+        usleep(1000);
+    }
+    return 0;
+}`,
+      'ui/ui.h': `// SquareLine Studio generated UI
+// Screen: 320x170, LVGL 9.5
+
+#ifndef _UI_H
+#define _UI_H
+
+#include "lvgl/lvgl.h"
+
+void ui_init(void);
+void ui_Screen1_screen_init(void);
+
+extern lv_obj_t *ui_Screen1;
+extern lv_obj_t *ui_switchPanel;
+extern lv_obj_t *ui_zuoPanel;
+extern lv_obj_t *ui_youPanel;
+
+// App icons loaded from PNG files
+extern const char *ui_img_store_logo_png;
+extern const char *ui_img_cli_logo_png;
+extern const char *ui_img_claw_logo_png;
+
+#endif`,
+      'ui/ui_events.c': `// Keyboard event handler for app switching
+#include "ui.h"
+#include "compat/input_keys.h"
+
+void main_key_switch(lv_event_t *e) {
+    uint32_t key = LV_EVENT_KEYBOARD_GET_KEY(e);
+
+    switch (key) {
+        case KEY_LEFT:
+        case KEY_Z:
+            switchyou(NULL);  // Slide carousel right
+            break;
+        case KEY_RIGHT:
+        case KEY_C:
+            switchzuo(NULL);  // Slide carousel left
+            break;
+        case KEY_ENTER:
+            app_launch(NULL); // Open selected app
+            break;
+        case KEY_ESC:
+            break;
+    }
+}`,
+    },
+    desc: 'APPLaunch Launcher with app carousel'
+  },
+
+  userdemo: {
+    files: {
+      'main.cpp': `// UserDemo — Simple status bar + content area
+#include "lvgl/lvgl.h"
+#include "ui/ui.h"
+
+int main(void) {
+    lv_init();
+
+    // Create SDL display (320x170)
+    lv_sdl_window_create(320, 170);
+    lv_sdl_mouse_create();
+    lv_sdl_keyboard_create();
+
+    // Init the UI (status bar + app area)
+    ui_init();
+
+    while (1) {
+        lv_timer_handler();
+        usleep(1000);
+    }
+    return 0;
+}`,
+      'ui/ui.c': `// UserDemo UI initialization
+#include "ui.h"
+
+lv_obj_t *ui_Screen1;
+lv_obj_t *ui_logo;
+lv_obj_t *ui_TimeLabel;
+lv_obj_t *ui_apppage;
+
+void ui_init(void) {
+    lv_disp_t *dispp = lv_disp_get_default();
+    lv_theme_t *theme = lv_theme_default_init(
+        dispp,
+        lv_palette_main(LV_PALETTE_BLUE),
+        lv_palette_main(LV_PALETTE_RED),
+        false, LV_FONT_DEFAULT
+    );
+    lv_disp_set_theme(dispp, theme);
+
+    ui_Screen1_screen_init();
+    lv_disp_load_scr(ui_Screen1);
+}`,
+    },
+    desc: 'UserDemo with status bar'
+  },
+
+  helloworld: {
+    files: {
+      'main.cpp': `// Hello World — Minimal LVGL app for CardputerZero
+// Display: 320x170 (ST7789V)
+
+#include "lvgl/lvgl.h"
+
+void create_ui(void) {
+    lv_obj_t *scr = lv_screen_active();
+
+    // Dark background
+    lv_obj_set_style_bg_color(scr,
+        lv_color_hex(0x1a1a2e), LV_PART_MAIN);
+
+    // Title label
+    lv_obj_t *title = lv_label_create(scr);
+    lv_label_set_text(title, "Hello CardputerZero!");
+    lv_obj_set_style_text_color(title,
+        lv_color_hex(0x00CC66), LV_PART_MAIN);
+    lv_obj_set_style_text_font(title,
+        &lv_font_montserrat_20, LV_PART_MAIN);
+    lv_obj_align(title, LV_ALIGN_CENTER, 0, -20);
+
+    // Subtitle
+    lv_obj_t *sub = lv_label_create(scr);
+    lv_label_set_text(sub, "320x170 | LVGL 9.5 | Linux");
+    lv_obj_set_style_text_color(sub,
+        lv_color_hex(0x888888), LV_PART_MAIN);
+    lv_obj_set_style_text_font(sub,
+        &lv_font_montserrat_12, LV_PART_MAIN);
+    lv_obj_align(sub, LV_ALIGN_CENTER, 0, 15);
+
+    // Button
+    lv_obj_t *btn = lv_button_create(scr);
+    lv_obj_align(btn, LV_ALIGN_BOTTOM_MID, 0, -10);
+    lv_obj_set_size(btn, 120, 30);
+
+    lv_obj_t *btn_label = lv_label_create(btn);
+    lv_label_set_text(btn_label, "Press Enter");
+    lv_obj_center(btn_label);
 }
 
-// Auto-load emulator on page load
-window.addEventListener('load', () => {
-  setTimeout(loadEmulator, 500);
+int main(void) {
+    lv_init();
+    lv_sdl_window_create(320, 170);
+    lv_sdl_mouse_create();
+    lv_sdl_keyboard_create();
+
+    create_ui();
+
+    while (1) {
+        lv_timer_handler();
+        usleep(1000);
+    }
+    return 0;
+}`,
+    },
+    desc: 'Minimal Hello World app'
+  }
+};
+
+// ── Editor State ────────────────────────────────────────────
+let editor = null;
+let currentExample = 'applaunch';
+let currentFile = null;
+let models = {};
+
+// ── Monaco Editor Setup ─────────────────────────────────────
+require.config({ paths: { vs: 'https://cdn.jsdelivr.net/npm/monaco-editor@0.52.2/min/vs' }});
+
+require(['vs/editor/editor.main'], function () {
+  monaco.editor.defineTheme('m5dark', {
+    base: 'vs-dark',
+    inherit: true,
+    rules: [],
+    colors: {
+      'editor.background': '#1e1e1e',
+      'editor.lineHighlightBackground': '#2a2a2a',
+    }
+  });
+
+  editor = monaco.editor.create(document.getElementById('editor-container'), {
+    theme: 'm5dark',
+    fontSize: 13,
+    fontFamily: "'JetBrains Mono', 'Fira Code', Menlo, monospace",
+    minimap: { enabled: false },
+    scrollBeyondLastLine: false,
+    automaticLayout: true,
+    readOnly: false,
+    wordWrap: 'on',
+    tabSize: 4,
+  });
+
+  loadExample('applaunch');
 });
 
-// Prevent arrow keys from scrolling the page when emulator has focus
+function loadExample(name) {
+  currentExample = name;
+  const ex = EXAMPLES[name];
+  if (!ex) return;
+
+  // Create models for each file
+  models = {};
+  const fileNames = Object.keys(ex.files);
+  fileNames.forEach(f => {
+    const lang = f.endsWith('.cpp') || f.endsWith('.h') ? 'cpp' : 'c';
+    models[f] = monaco.editor.createModel(ex.files[f], lang);
+  });
+
+  // Build file tabs
+  const tabsEl = document.getElementById('file-tabs');
+  tabsEl.innerHTML = '';
+  fileNames.forEach((f, i) => {
+    const tab = document.createElement('button');
+    tab.className = 'file-tab' + (i === 0 ? ' active' : '');
+    tab.textContent = f;
+    tab.onclick = () => switchFile(f);
+    tabsEl.appendChild(tab);
+  });
+
+  // Show first file
+  switchFile(fileNames[0]);
+  document.getElementById('status-text').textContent = ex.desc;
+}
+
+function switchFile(name) {
+  currentFile = name;
+  if (editor && models[name]) {
+    editor.setModel(models[name]);
+  }
+  document.querySelectorAll('.file-tab').forEach(t => {
+    t.classList.toggle('active', t.textContent === name);
+  });
+}
+
+// ── Emulator ────────────────────────────────────────────────
+function reloadEmulator() {
+  document.getElementById('emu-frame').src = 'emulator/index.html';
+}
+
+window.addEventListener('load', () => setTimeout(reloadEmulator, 300));
+
 window.addEventListener('keydown', (e) => {
-  if ([37,38,39,40,32,9].includes(e.keyCode)) {
+  if ([37,38,39,40,32].includes(e.keyCode)) {
     const active = document.activeElement;
-    if (active && active.tagName === 'IFRAME') {
-      e.preventDefault();
-    }
+    if (active && active.tagName === 'IFRAME') e.preventDefault();
   }
 });
 </script>
-
 </body>
 </html>

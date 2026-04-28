@@ -135,11 +135,11 @@ target_include_directories(APPLaunch PRIVATE
 )
 if(WIN32)
     target_compile_options(APPLaunch PRIVATE
-        "-include${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat_win.h"
+        "SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat_win.h"
         -Wno-c++11-narrowing)
 else()
     target_compile_options(APPLaunch PRIVATE
-        "-include${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h"
+        "SHELL:-include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h"
         -Wno-c++11-narrowing)
 endif()
 # App dylibs resolve LVGL symbols at load time from the emulator process

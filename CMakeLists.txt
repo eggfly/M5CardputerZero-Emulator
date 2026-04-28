@@ -297,7 +297,7 @@ if(EMSCRIPTEN)
     )
 
     target_include_directories(cardputer-emu-web PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/compat  # sys/queue.h polyfill
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/compat_queue  # sys/queue.h only (no pthread.h conflict)
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/src
         ${CMAKE_CURRENT_SOURCE_DIR}/lib

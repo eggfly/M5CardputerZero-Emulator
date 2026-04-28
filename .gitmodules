@@ -1,3 +1,6 @@
 [submodule "vendor/M5CardputerZero-UserDemo"]
 	path = vendor/M5CardputerZero-UserDemo
-	url = git@github.com:eggfly/M5CardputerZero-UserDemo.git
+	url = https://github.com/eggfly/M5CardputerZero-UserDemo.git
+[submodule "lib/lvgl"]
+	path = lib/lvgl
+	url = https://github.com/lvgl/lvgl.git

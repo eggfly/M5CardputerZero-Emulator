@@ -58,16 +58,20 @@ jobs:
         cmake --build . --config Release -j $env:NUMBER_OF_PROCESSORS
 
     - name: Package
+      shell: pwsh
       run: |
-        mkdir dist\M5CardputerZero-Emulator
-        copy build\Release\cardputer-emu.exe dist\M5CardputerZero-Emulator\
-        xcopy /E /I build\apps dist\M5CardputerZero-Emulator\apps
-        xcopy /E /I build\assets dist\M5CardputerZero-Emulator\assets
-        xcopy /E /I build\share dist\M5CardputerZero-Emulator\share
+        New-Item -ItemType Directory -Force -Path dist\M5CardputerZero-Emulator
+        # Find the exe (may be in Release/ or root)
+        $exe = Get-ChildItem -Path build -Recurse -Filter "cardputer-emu.exe" | Select-Object -First 1
+        Copy-Item $exe.FullName dist\M5CardputerZero-Emulator\
+        if (Test-Path build\apps) { Copy-Item -Recurse build\apps dist\M5CardputerZero-Emulator\ }
+        if (Test-Path build\Release\apps) { Copy-Item -Recurse build\Release\apps dist\M5CardputerZero-Emulator\ }
+        Copy-Item -Recurse build\assets dist\M5CardputerZero-Emulator\ -ErrorAction SilentlyContinue
+        Copy-Item -Recurse build\share dist\M5CardputerZero-Emulator\ -ErrorAction SilentlyContinue
         # Copy runtime DLLs
-        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\SDL2.dll dist\M5CardputerZero-Emulator\
-        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\SDL2_image.dll dist\M5CardputerZero-Emulator\
-        copy $env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\freetype.dll dist\M5CardputerZero-Emulator\
+        Get-ChildItem "$env:VCPKG_INSTALLATION_ROOT\installed\x64-windows\bin\*.dll" | ForEach-Object {
+          Copy-Item $_.FullName dist\M5CardputerZero-Emulator\
+        }
         Compress-Archive -Path dist\M5CardputerZero-Emulator -DestinationPath M5CardputerZero-Emulator-Windows.zip
 
     - uses: actions/upload-artifact@v4
@@ -86,7 +90,7 @@ jobs:
     - name: Install dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libsdl2-dev libsdl2-image-dev libfreetype-dev pkg-config
+        sudo apt-get install -y libsdl2-dev libsdl2-image-dev libfreetype-dev libinput-dev libxkbcommon-dev pkg-config
 
     - name: Build
       run: |
@@ -119,7 +123,7 @@ jobs:
     - name: Setup Emscripten
       uses: mymindstorm/setup-emsdk@v14
       with:
-        version: 3.1.61
+        version: 3.1.73
 
     - name: Build
       run: |

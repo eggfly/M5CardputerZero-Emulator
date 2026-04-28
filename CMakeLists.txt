@@ -127,12 +127,22 @@ target_include_directories(APPLaunch PRIVATE
     ${APPLAUNCH}/include
     ${APPLAUNCH}
 )
-target_compile_options(APPLaunch PRIVATE
-    -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h
-    -Wno-c++11-narrowing
-)
+if(MSVC)
+    target_compile_options(APPLaunch PRIVATE /FI${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h)
+else()
+    target_compile_options(APPLaunch PRIVATE
+        -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h
+        -Wno-c++11-narrowing)
+endif()
 # App dylibs resolve LVGL symbols at load time from the emulator process
-target_link_options(APPLaunch PRIVATE -undefined dynamic_lookup)
+if(APPLE)
+    target_link_options(APPLaunch PRIVATE -undefined dynamic_lookup)
+elseif(WIN32)
+    # On Windows, link against lvgl directly
+    target_link_libraries(APPLaunch PRIVATE lvgl)
+else()
+    target_link_options(APPLaunch PRIVATE -Wl,--unresolved-symbols=ignore-all)
+endif()
 
 # ---------------------------------------------------------------------------
 # APP: UserDemo.dylib
@@ -147,10 +157,18 @@ target_include_directories(UserDemo PRIVATE
     ${USERDEMO}/include
     ${USERDEMO}
 )
-target_compile_options(UserDemo PRIVATE
-    -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h
-)
-target_link_options(UserDemo PRIVATE -undefined dynamic_lookup)
+if(MSVC)
+    target_compile_options(UserDemo PRIVATE /FI${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h)
+else()
+    target_compile_options(UserDemo PRIVATE -include ${CMAKE_CURRENT_SOURCE_DIR}/src/emu_compat.h)
+endif()
+if(APPLE)
+    target_link_options(UserDemo PRIVATE -undefined dynamic_lookup)
+elseif(WIN32)
+    target_link_libraries(UserDemo PRIVATE lvgl)
+else()
+    target_link_options(UserDemo PRIVATE -Wl,--unresolved-symbols=ignore-all)
+endif()
 
 # ---------------------------------------------------------------------------
 # Emulator executable (thin shell — loads app via dlopen)
@@ -166,22 +184,25 @@ target_include_directories(cardputer-emu PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/src
     ${CMAKE_CURRENT_SOURCE_DIR}/lib
 )
-target_compile_options(cardputer-emu PRIVATE
-    -Wno-c++11-narrowing
-)
+if(NOT MSVC)
+    target_compile_options(cardputer-emu PRIVATE -Wno-c++11-narrowing)
+endif()
 
 # Force-load entire LVGL so all symbols are available to dlopen'd apps
 if(APPLE)
     target_link_libraries(cardputer-emu PRIVATE
         -Wl,-force_load,$<TARGET_FILE:lvgl>
-    )
-    # Also force-load sub-libraries if they exist
-    target_link_libraries(cardputer-emu PRIVATE
         -Wl,-force_load,$<TARGET_FILE:lvgl_thorvg>
     )
+elseif(WIN32)
+    # MSVC: /WHOLEARCHIVE
+    target_link_libraries(cardputer-emu PRIVATE lvgl lvgl_thorvg)
+    target_link_options(cardputer-emu PRIVATE
+        /WHOLEARCHIVE:lvgl /WHOLEARCHIVE:lvgl_thorvg)
 else()
+    # Linux: --whole-archive
     target_link_libraries(cardputer-emu PRIVATE
-        -Wl,--whole-archive lvgl lvgl_thorvg -Wl,--no-whole-archive
+        -Wl,--whole-archive $<TARGET_FILE:lvgl> $<TARGET_FILE:lvgl_thorvg> -Wl,--no-whole-archive
     )
 endif()
 
@@ -194,7 +215,7 @@ else()
     target_include_directories(cardputer-emu PRIVATE ${SDL2_INCLUDE_DIRS})
     target_link_libraries(cardputer-emu PRIVATE ${SDL2_LIBRARIES})
 endif()
-if(APPLE AND TARGET SDL2::SDL2main)
+if(TARGET SDL2::SDL2main)
     target_link_libraries(cardputer-emu PRIVATE SDL2::SDL2main)
 endif()
 

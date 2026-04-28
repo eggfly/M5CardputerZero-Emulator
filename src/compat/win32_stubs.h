@@ -28,10 +28,21 @@ static inline pid_t fork(void) { return -1; }
 static inline pid_t waitpid(pid_t p, int *s, int o) { (void)p;if(s)*s=0;(void)o; return -1; }
 #endif
 
-// openpty stub (MinGW doesn't have pty.h)
+// kill stub
+#ifndef kill
+static inline int kill(pid_t p, int s) { (void)p;(void)s; return -1; }
+#endif
+#ifndef SIGKILL
+#define SIGKILL 9
+#endif
+
+// PTY stubs (openpty, setsid, winsize)
+struct winsize { unsigned short ws_row, ws_col, ws_xpixel, ws_ypixel; };
 static inline int openpty(int *m, int *s, char *n, void *t, void *w) {
     (void)m;(void)s;(void)n;(void)t;(void)w; return -1;
 }
+static inline pid_t setsid(void) { return -1; }
+static inline int dup2(int o, int n) { (void)o;(void)n; return -1; }
 
 #endif // _SYS_WAIT_STUBS
 #endif // _WIN32

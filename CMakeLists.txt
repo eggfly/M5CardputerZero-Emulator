@@ -54,7 +54,8 @@ if(EMSCRIPTEN OR WIN32)
     add_definitions(-DLV_USE_FREETYPE=0)
 endif()
 if(EMSCRIPTEN)
-    add_compile_options(-sUSE_SDL=2 -pthread)
+    add_compile_options(-sUSE_SDL=2 -sUSE_PTHREADS=1)
+    add_link_options(-sUSE_PTHREADS=1)
 endif()
 
 # SDL2 parent include for <SDL2/SDL.h>
